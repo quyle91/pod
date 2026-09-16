@@ -4,17 +4,86 @@
 title: "Workflows & Lifecycle Diagrams"
 updated_at: 2026-09-16T00:00:00Z
 updated_by: Antigravity
-version: 1.0
+version: 1.1
 status: APPROVED_FOR_DEVELOPMENT
 ---
 
-Tài liệu này đặc tả chi tiết 2 quy trình hoạt động cốt lõi của hệ thống POD Personalization:
-1. **Quy trình tuần tự hoàn chỉnh (End-to-End Sequence)** từ khi khách hàng bấm "Add to Cart" đến khi nhận hàng.
-2. **Quy trình quản trị của Admin trong WooCommerce Dashboard** từ khâu cấu hình template đến khi xuất xưởng (Fulfillment).
+Tài liệu này đặc tả trực quan các quy trình cốt lõi của hệ thống POD Personalization bằng sơ đồ hình khối tiêu chuẩn:
+1. **Sơ đồ hình khối tổng thể (Multi-Shape Flowchart)**: Thể hiện hành trình từ lúc User nhấn "Add to Cart", hệ thống ngầm render 300 DPI, đến Admin xử lý trong Dashboard và hoàn tất đơn hàng.
+2. **Sơ đồ tương tác tuần tự (Sequence Diagram)**: Chi tiết thông điệp API và webhook giữa các tầng hệ thống.
+3. **Đặc tả nghiệp vụ chi tiết 4 giai đoạn**.
 
 ---
 
-## 1. Toàn Bộ Vòng Đời Đơn Hàng (Sequence Diagram)
+## 1. Sơ Đồ Quy Trình Tổng Thể Đa Khối Hình (Comprehensive Flowchart)
+
+> **Quy ước hình khối:**  
+> - **Hình Tròn / Bầu dục `(( ... ))` / `([ ... ])`**: Điểm Bắt đầu, Kết thúc hoặc Trạng thái đơn hàng (Milestones / Status).  
+> - **Hình Chữ nhật `[ ... ]`**: Hành động hoặc bước xử lý nghiệp vụ (Process).  
+> - **Hình Thoi / Tam giác rẽ nhánh `{ ... }`**: Điểm quyết định logic / Rẽ nhánh điều kiện (Decision).  
+> - **Hình Bình hành `[/ ... /]`**: Nhập dữ liệu đầu vào hoặc Xuất kết quả (Input / Output).  
+> - **Hình Trụ `[( ... )]`**: Cơ sở dữ liệu và Kho lưu trữ file (Database / Storage).  
+> - **Hình Hộp kép `[[ ... ]]`**: Tiến trình hệ thống xử lý ngầm (Subprocess).
+
+```mermaid
+flowchart TD
+    classDef startEnd fill:#1e293b,stroke:#0f172a,stroke-width:2px,color:#fff;
+    classDef userAction fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef systemProcess fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
+    classDef decision fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#78350f;
+    classDef storage fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#064e3b;
+    classDef adminAction fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d;
+    classDef error fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    subgraph Frontend["🛒 LUỒNG 1: FRONT-END USER (TỪ ADD TO CART ĐẾN NHẬN HÀNG)"]
+        StartUser(["(( Khách vào trang sản phẩm ))"]):::startEnd
+        InputDesign[/"Khách nhập Text, chọn Font, chọn Clipart, đổi màu"/]:::userAction
+        ClickAddToCart["[ Bấm nút: Add to cart ]"]:::userAction
+        SaveCartMeta["[ Lưu JSON state vào WooCommerce Cart Item ]"]:::systemProcess
+        UserCheckout["[ Xem giỏ hàng & Tiến hành Thanh toán ]"]:::userAction
+        OrderCreated{"{ Đặt hàng thành công? }"}:::decision
+        FailPay["[ Báo lỗi thanh toán ]"]:::error
+        OrderProcessing(["(( Đơn hàng: PROCESSING ))"]):::startEnd
+        UserWait["[ Chờ xưởng sản xuất & giao hàng ]"]:::userAction
+        UserReceive(["(( Khách nhận bưu kiện tận tay ))"]):::startEnd
+    end
+    subgraph System["⚙️ LUỒNG 2: XỬ LÝ NGẦM & LƯU TRỮ DỮ LIỆU"]
+        DB_Order[("[( MySQL: wp_woocommerce_order_itemmeta )]")]:::storage
+        TriggerWebhook[["[[ Webhook: Bắn JSON sang pod-backend.localhost ]]"]]:::systemProcess
+        RenderEngine[["[[ Sharp Engine: Ghép layer ảnh độ nét 300 DPI ]]"]]:::systemProcess
+        CheckRender{"{ Render thành công? }"}:::decision
+        StoragePrints[("[( Storage: File in order_xxx_300dpi.png )]")]:::storage
+        UpdateMeta["[ REST Callback: Cập nhật _pod_print_ready_url ]"]:::systemProcess
+        LogRetry["[ Ghi log lỗi & chờ retry ]"]:::error
+    end
+    subgraph Dashboard["👨‍💼 LUỒNG 3: ADMIN DASHBOARD & FULFILLMENT"]
+        AdminLogin["[ Admin vào WooCommerce > Orders ]"]:::adminAction
+        InspectOrder{"{ Đơn hàng có file in POD? }"}:::decision
+        WaitPrint["[ Đợi Render hoàn tất ]"]:::decision
+        DownloadPrint[/"Tải file in 300 DPI độ nét cao"/]:::adminAction
+        SendToFactory["[ Gửi file in & thông tin cho Xưởng in ]"]:::adminAction
+        FactoryPrint["[ Xưởng in lên áo/cốc & đóng gói kiện hàng ]"]:::adminAction
+        GetTracking[/"Nhận mã vận đơn Tracking Number"/]:::adminAction
+        CompleteOrder(["(( Đổi trạng thái: COMPLETED ))"]):::startEnd
+        ShippingDelivery["[ Shipper vận chuyển giao hàng ]"]:::adminAction
+    end
+    StartUser --> InputDesign --> ClickAddToCart --> SaveCartMeta --> UserCheckout --> OrderCreated
+    OrderCreated -- "Không" --> FailPay
+    OrderCreated -- "Có" --> OrderProcessing
+    OrderProcessing --> DB_Order
+    DB_Order --> TriggerWebhook --> RenderEngine --> CheckRender
+    CheckRender -- "Lỗi" --> LogRetry --> TriggerWebhook
+    CheckRender -- "Thành công" --> StoragePrints --> UpdateMeta
+    UpdateMeta --> AdminLogin
+    AdminLogin --> InspectOrder
+    InspectOrder -- "Đang xử lý" --> WaitPrint --> InspectOrder
+    InspectOrder -- "Sẵn sàng" --> DownloadPrint
+    DownloadPrint --> SendToFactory --> FactoryPrint --> GetTracking --> CompleteOrder
+    CompleteOrder --> ShippingDelivery --> UserWait --> UserReceive
+```
+
+---
+
+## 2. Toàn Bộ Vòng Đời Đơn Hàng (Sequence Diagram)
 
 ```mermaid
 sequenceDiagram
@@ -59,38 +128,6 @@ sequenceDiagram
         Factory->>User: Shipper giao bưu kiện tận tay khách hàng
         User->>User: Nhận sản phẩm hoàn thiện đúng như bản thiết kế
     end
-```
-
----
-
-## 2. Quy Trình Làm Việc Của Admin Trong Dashboard (Flowchart)
-
-```mermaid
-flowchart TD
-    subgraph Setup["1. Cấu hình ban đầu (One-time Setup)"]
-        A1["Vào WooCommerce > Settings > POD Customizer"] --> A2["Điền Backend Worker URL & Secret Key"]
-        A2 --> A3["Tạo Template sản phẩm POD:<br/>Upload mockup áo, định nghĩa vùng in X/Y/Width/Height"]
-    end
-    subgraph OrderManagement["2. Quản trị & Xử lý đơn hàng hàng ngày"]
-        B1["Khách đặt hàng mới"] --> B2["Vào WooCommerce > Orders"]
-        B2 --> B3{"Kiểm tra đơn hàng có tùy biến POD?"}
-        B3 -- "Không" --> B4["Xử lý như sản phẩm thông thường"]
-        B3 -- "Có" --> B5{"Trạng thái Render file in 300 DPI"}
-        B5 -- "Pending / Rendering" --> B6["Đợi vài giây để Backend Worker xử lý xong"]
-        B6 --> B5
-        B5 -- "Failed" --> B7["Bấm nút 'Re-render' để gửi lại webhook"]
-        B7 --> B6
-        B5 -- "Completed" --> B8["Hiển thị nút 'Download 300 DPI Print File'"]
-        B8 --> B9["Admin tải file in ấn độ phân giải cao"]
-    end
-    subgraph Fulfillment["3. Xuất xưởng & Hoàn tất"]
-        B9 --> C1["Gửi file in sang xưởng POD<br/>(hoặc webhook tự động đẩy qua CustomCat/Printful)"]
-        C1 --> C2["Nhận mã Tracking từ đơn vị vận chuyển"]
-        C2 --> C3["Nhập Tracking Code & Đổi Order status sang 'Completed'"]
-        C3 --> C4["Khách nhận thông báo giao hàng & nhận bưu kiện"]
-    end
-    Setup --> OrderManagement
-    OrderManagement --> Fulfillment
 ```
 
 ---
