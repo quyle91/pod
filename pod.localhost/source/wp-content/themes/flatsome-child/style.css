@@ -1,0 +1,20 @@
+/*
+Theme Name: Flatsome Child
+Description: This is a child theme for Flatsome Theme
+Author: UX Themes
+Template: flatsome
+Version: 1.0
+Domain Path: /languages
+Text Domain: flatsome-child
+*/
+
+/* Nếu báo lỗi _load_textdomain_just_in_time  thì là do flatsome đang bật option trong Advanced-> Woocommerce-> Product variations */
+
+/*************** ADD CUSTOM CSS HERE.   ***************/
+
+
+@media only screen and (max-width: 48em) {
+/*************** ADD MOBILE ONLY CSS HERE  ***************/
+
+
+}

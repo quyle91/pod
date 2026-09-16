@@ -1,0 +1,19 @@
+body {
+    .mfp-content {
+        &>* {
+            background-color: white !important;
+        }
+
+        .sidebar-inner {
+            .adminz_widget_taxonomies {
+                .widget-title {
+                    //
+                }
+
+                .widget-content {
+                    //
+                }
+            }
+        }
+    }
+}

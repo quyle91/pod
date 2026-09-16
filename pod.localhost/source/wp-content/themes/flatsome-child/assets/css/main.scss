@@ -1,0 +1,155 @@
+// ========== FLATSOME SCREEN SIZES ==============
+// mobile: max-width: 549px 
+// table: min-width: 550px
+// pc: min-width: 850px
+// More: admin dashboard/ tools/ administratorz/ flatsome/ Cheatsheet
+
+
+// override 
+html {
+    background-color: white;
+}
+
+body {
+
+    .h1,
+    h1,
+    .h2,
+    h2,
+    .h3,
+    h3,
+    .nav-uppercase>li>a,
+    .uppercase {
+        letter-spacing: 0px;
+    }
+
+    h1,
+    .h1 {
+        // font-size: 1.5em;
+
+        @media(min-width: 850px) {
+            // font-size: 1.875em;
+        }
+    }
+
+    h2,
+    .h2 {
+        font-size: 1.5em;
+
+        @media(min-width: 850px) {
+            // font-size: 1.875em;
+        }
+    }
+
+    h3,
+    .h3 {
+        font-size: 1.5em;
+
+        @media(min-width: 850px) {
+            // font-size: 1.875em;
+        }
+    }
+
+    h4,
+    .h4 {
+        font-size: 1.5em;
+
+        @media(min-width: 850px) {
+            // font-size: 1.875em;
+        }
+    }
+
+    .nav-column>li>a,
+    .nav-dropdown>li>a,
+    .nav-vertical-fly-out>li>a,
+    .nav>li>a {
+        color: #232323;
+    }
+
+    .dark .nav-vertical li li.menu-item-has-children>a,
+    .dark .nav-vertical-fly-out>li>a,
+    .dark .nav-vertical>li>ul li a,
+    .dark .nav>li.html,
+    .dark .nav>li>a,
+    .nav-dark .is-outline,
+    .nav-dark .nav>li>a,
+    .nav-dark .nav>li>button,
+    .nav-dropdown.dark .nav-column>li>a,
+    .nav-dropdown.dark>li>a {
+        color: #fff !important;
+    }
+
+    label,
+    legend {
+        font-weight: normal;
+        font-size: 1em;
+    }
+
+    button,
+    .button {
+        &:not(.ux-quantity__button):not(.icon):not(.toggle):not(.mfp-close) {
+            //
+        }
+    }
+
+    .text {
+
+        // divider bên trong text có thể align theo parent
+        .divider {
+            display: inline-block;
+        }
+    }
+
+    form {
+
+        .select-resize-ghost,
+        .select2-container .select2-choice,
+        .select2-container .select2-selection,
+        input[type=date],
+        input[type=email],
+        input[type=number],
+        input[type=password],
+        input[type=search],
+        input[type=tel],
+        input[type=text],
+        input[type=url],
+        select {
+            //
+        }
+
+        textarea {
+            //
+        }
+    }
+
+    #header {
+        #top-bar {
+            //
+        }
+
+        #masthead {
+            //
+        }
+
+        #wide-nav {
+            //
+        }
+
+        #header-contact {
+            i[class*="icon-"] {
+                color: var(--primary-color);
+            }
+        }
+    }
+
+    #main {
+        //
+    }
+
+
+    img {
+        &.size-full.alignnone {
+            margin-bottom: 0px;
+        }
+    }
+}

@@ -1,0 +1,45 @@
+# Đây là tệp robots.txt cho website quyle91.net
+# Mục đích của tệp này là hướng dẫn các công cụ tìm kiếm cách lập chỉ mục các trang web
+
+User-agent: *
+Allow: /wp-admin/admin-ajax.php
+Allow: /wp-content/uploads/
+
+# Wordpress
+Disallow: /wp-admin/
+Disallow: /feed/
+Disallow: /trackback/
+Disallow: /xmlrpc.php
+
+# Chặn các trang WooCommerce không cần lập chỉ mục
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /my-account/
+Disallow: /add-to-cart/
+Disallow: /thank-you/
+Disallow: /wc-api/
+Disallow: /?add-to-cart=
+
+# Chặn các trang tìm kiếm nội bộ
+Disallow: /search/
+Disallow: /?s=
+Disallow: /?post_type=product&s=
+
+# Chặn các trang phân trang không cần thiết (tránh nội dung trùng lặp)
+Disallow: /*page/*/?*
+Disallow: /*product-page=* 
+Disallow: /*orderby=
+Disallow: /*filter_
+
+# Chặn URL có tham số không quan trọng
+Disallow: /*?utm_source=
+Disallow: /*?utm_medium=
+Disallow: /*?utm_campaign=
+Disallow: /*?fbclid=
+Disallow: /*?gclid=
+
+# Chặn custom post_type
+Disallow: /du-an/
+
+# Khai báo sơ đồ trang web (nếu dùng Rank Math hoặc Yoast SEO)
+Sitemap: https://quyle91.net/sitemap_index.xml

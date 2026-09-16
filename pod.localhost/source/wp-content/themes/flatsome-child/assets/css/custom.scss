@@ -1,0 +1,13 @@
+body.administrator-z.pack2 .product-small.col .col-inner {
+    border: none !important;
+}
+
+.row-5-cols-pc{
+    @media(min-width: 850px) {
+        flex-wrap: nowrap !important;
+        &>.col{
+            flex-basis: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+}
