@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <radialGradient id="bgMug" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </radialGradient>
+    <linearGradient id="mugBody" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="15%" stop-color="#ffffff"/>
+      <stop offset="85%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <filter id="mugShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="20" stdDeviation="28" flood-color="#0f172a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="1200" fill="url(#bgMug)"/>
+
+  <g filter="url(#mugShadow)">
+    <!-- Mug Handle -->
+    <path d="M720,420 C880,420 900,720 720,740 L720,680 C820,660 810,480 720,480 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+
+    <!-- Mug Cylinder Body -->
+    <path d="M380,340 C460,360 660,360 740,340 L740,840 C740,890 660,920 560,920 C460,920 380,890 380,840 Z" fill="url(#mugBody)" stroke="#cbd5e1" stroke-width="3"/>
+
+    <!-- Mug Rim (Ellipse) -->
+    <ellipse cx="560" cy="340" rx="180" ry="40" fill="#f1f5f9" stroke="#94a3b8" stroke-width="3"/>
+    <ellipse cx="560" cy="340" rx="160" ry="32" fill="#e2e8f0"/>
+
+    <!-- Printable Area Guide Box (Subtle) -->
+    <rect x="420" y="440" width="280" height="360" rx="8" fill="none" stroke="#e2e8f0" stroke-dasharray="6,6" stroke-width="2"/>
+  </g>
+</svg>

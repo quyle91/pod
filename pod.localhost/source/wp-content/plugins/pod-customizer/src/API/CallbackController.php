@@ -66,6 +66,7 @@ class CallbackController implements HandlerInterface {
         $order_id = isset($params['order_id']) ? (int)$params['order_id'] : 0;
         $item_id  = isset($params['item_id']) ? (int)$params['item_id'] : 0;
         $print_url = isset($params['print_url']) ? esc_url_raw($params['print_url']) : '';
+        $zip_url   = isset($params['zip_url']) ? esc_url_raw($params['zip_url']) : '';
         $status    = isset($params['status']) ? sanitize_text_field($params['status']) : 'completed';
 
         if (!$order_id || !$item_id) {
@@ -91,18 +92,42 @@ class CallbackController implements HandlerInterface {
             ], 404);
         }
 
-        // Update item metadata
+        // Download and persist production files on the WordPress client (wp-content/uploads/pod-prints/)
+        if (!empty($print_url)) {
+            $local_print_url = \PodCustomizer\Services\PrintStorageManager::store_production_file($order_id, $item_id, $print_url, 'print');
+            if ($local_print_url) {
+                $print_url = $local_print_url;
+            }
+        }
+
+        if (!empty($zip_url)) {
+            $local_zip_url = \PodCustomizer\Services\PrintStorageManager::store_production_file($order_id, $item_id, $zip_url, 'zip');
+            if ($local_zip_url) {
+                $zip_url = $local_zip_url;
+            }
+        }
+
+        // Update item metadata with local client URLs
         $item->update_meta_data(OrderHandler::ORDER_ITEM_META_PRINT_URL, $print_url);
+        if (!empty($zip_url)) {
+            $item->update_meta_data(OrderHandler::ORDER_ITEM_META_ZIP_URL, $zip_url);
+        }
         $item->update_meta_data(OrderHandler::ORDER_ITEM_META_PRINT_STATUS, $status);
         $item->save();
 
+        // Update dedicated custom database table
+        \PodCustomizer\Database\Repositories\RenderJobRepository::update_status($item_id, $status, $print_url);
+
         $order->add_order_note(
-            sprintf(__('POD Customizer: Print-ready file rendered (Item #%d). Status: %s', 'pod-customizer'), $item_id, $status)
+            sprintf(__('POD Customizer: Production files stored locally on client (Item #%d). Status: %s', 'pod-customizer'), $item_id, $status)
         );
 
         return new WP_REST_Response([
-            'success' => true,
-            'message' => 'Order item updated successfully'
+            'success'        => true,
+            'message'        => 'Production files saved locally on client and order item updated successfully',
+            'stored_locally' => true,
+            'print_url'      => $print_url,
+            'zip_url'        => $zip_url,
         ], 200);
     }
 }

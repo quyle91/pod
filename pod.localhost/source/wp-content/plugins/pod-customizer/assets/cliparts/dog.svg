@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <g fill="#eab308" stroke="#a16207" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Droopy Ears -->
+    <path d="M140,160 C90,200 80,300 130,320 C160,320 170,260 160,200 Z" fill="#ca8a04"/>
+    <path d="M360,160 C410,200 420,300 370,320 C340,320 330,260 340,200 Z" fill="#ca8a04"/>
+    
+    <!-- Head -->
+    <ellipse cx="250" cy="230" rx="140" ry="110"/>
+    
+    <!-- Snout -->
+    <ellipse cx="250" cy="270" rx="65" ry="50" fill="#fef08a" stroke="#ca8a04" stroke-width="6"/>
+    
+    <!-- Nose -->
+    <ellipse cx="250" cy="250" rx="24" ry="18" fill="#0f172a" stroke="none"/>
+    <circle cx="256" cy="245" r="5" fill="#ffffff" stroke="none"/>
+
+    <!-- Mouth & Tongue -->
+    <path d="M250,265 L250,285 C240,295 230,290 225,285 M250,285 C260,295 270,290 275,285" fill="none" stroke="#0f172a" stroke-width="6"/>
+    <path d="M245,290 C245,315 255,315 255,290 Z" fill="#ef4444" stroke="none"/>
+
+    <!-- Eyes -->
+    <ellipse cx="195" cy="205" rx="16" ry="22" fill="#0f172a" stroke="none"/>
+    <circle cx="200" cy="200" r="5" fill="#ffffff" stroke="none"/>
+    <ellipse cx="305" cy="205" rx="16" ry="22" fill="#0f172a" stroke="none"/>
+    <circle cx="310" cy="200" r="5" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

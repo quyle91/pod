@@ -49,7 +49,8 @@ graph LR
 ```
 
 > [!NOTE]
-> Chi tiết toàn bộ sơ đồ tuần tự (End-to-End Sequence Diagram) và quy trình làm việc của Admin trong Dashboard được đặc tả tại [**`.specify/workflows.md`**](./workflows.md).
+> - Chi tiết toàn bộ sơ đồ tuần tự (End-to-End Sequence Diagram) và quy trình làm việc của Admin trong Dashboard được đặc tả tại [**`.specify/workflows.md`**](./workflows.md).
+> - Chuẩn hóa các Thực thể (Entities), Hợp đồng dữ liệu (Data Contracts), và Cấu trúc lưu trữ Database (Tables & Meta keys) được đặc tả tại [**`.specify/entities_and_database.md`**](./entities_and_database.md).
 
 ---
 
@@ -64,22 +65,28 @@ graph LR
 
 ## 4. Key Milestones & Phases
 
-* **Phase 1: Local Infrastructure Setup**
+* **Phase 1: Local Infrastructure Setup** ([`specs/001-local-environment-setup/`](../specs/001-local-environment-setup/))
   * Traefik integration on `proxy_network`.
   * Multi-container setup for `pod.localhost` and `pod-backend.localhost`.
   * Connectivity and routing healthchecks.
-* **Phase 2: Core Plugin Boilerplate (`pod-customizer`)**
+* **Phase 2: Core Plugin Boilerplate (`pod-customizer`)** ([`specs/002-plugin-architecture-boilerplate/`](../specs/002-plugin-architecture-boilerplate/))
   * PSR-4 structure adhering to SOLID/DRY.
   * WooCommerce hooks: Cart item custom data, Order item meta persistence, Admin order display.
   * Settings page with Backend Worker URL and secret token authentication.
-* **Phase 3: Backend Render Worker Boilerplate**
+* **Phase 3: Backend Render Worker Boilerplate** ([`specs/003-backend-render-engine/`](../specs/003-backend-render-engine/))
   * Node.js + Express with `sharp` installed.
   * Healthcheck endpoint (`/health`) and Render task endpoint (`/api/v1/render`).
   * Asynchronous queue scaffolding.
-* **Phase 4: Storefront Personalization & Canvas Preview**
+* **Phase 4: Storefront Personalization & Canvas Preview** ([`specs/004-storefront-canvas-customizer/`](../specs/004-storefront-canvas-customizer/))
   * Lightweight canvas integration on WooCommerce single product pages.
   * JSON state generator matching strict data contract.
-* **Phase 5: Automated E2E Order-to-Print Flow**
+* **Phase 5: Automated E2E Order-to-Print Flow** ([`specs/005-e2e-order-to-print-flow/`](../specs/005-e2e-order-to-print-flow/))
   * Webhook dispatch on order status change.
   * Sharp 300 DPI layer compositing.
   * Order meta update with high-resolution download link.
+* **Phase 6: Custom Database Storage & Queue Pipeline** ([`specs/006-custom-database-tables/`](../specs/006-custom-database-tables/))
+  * Dedicated tables `{$wpdb->prefix}pod_render_jobs` and `{$wpdb->prefix}pod_preview_files`.
+  * Cascading foreign keys linked to WooCommerce `order_items`.
+  * Safe `dbDelta` migration engine and Repository pattern.
+
+

@@ -23,19 +23,24 @@ Every feature specification directory (`.specify/specs/XXX-.../tasks.md`) MUST c
 2. **Directory-to-Namespace Parity**: The namespace `PodCustomizer\` must map 1:1 with `src/` (or `includes/`).
 3. **Dependency Injection**: Pass dependencies via constructors rather than abusing static globals or hidden singletons where testing is required.
 
-### 2.2 Open/Closed Principle (Extensibility Rule)
+### 2.2 Database Table & Foreign Key Conventions
+1. **Mandatory Custom Table Prefix**: All custom tables must strictly adhere to the WordPress prefix: `{$wpdb->prefix}pod_*`. Never hardcode `wp_pod_*` directly in SQL statements.
+2. **Explicit Foreign Key Constraints**: All custom relational tables must define explicit foreign keys referencing core WooCommerce entities (`order_item_id` -> `{$wpdb->prefix}woocommerce_order_items.order_item_id`) with appropriate cascade policies (`ON DELETE CASCADE`).
+
+### 2.3 Open/Closed Principle (Extensibility Rule)
 1. **Hook-Driven Architecture**: Every critical processing step must fire WordPress actions and filters:
    - `do_action('pod_customizer_before_cart_item_added', $cart_item_data, $product_id);`
    - `apply_filters('pod_customizer_render_payload', $payload, $order, $item);`
 2. **Pluggable Render Dispatchers**: Dispatching to the backend worker must implement `DispatcherInterface`, allowing local mock dispatchers in unit tests and production HTTP dispatchers in live environments.
 
-### 2.3 DRY (Don't Repeat Yourself) Rule
+### 2.4 DRY (Don't Repeat Yourself) Rule
 1. Duplicate JSON encoding/decoding, input validation, or error logging across handlers is strictly forbidden.
 2. Abstract common behaviors into traits or abstract base classes (e.g. `AbstractWebhookHandler`, `SanitizationHelper`).
 
-### 2.4 Strict Data Contracts & Zero Fallbacks
+### 2.5 Strict Data Contracts & Zero Fallbacks
 1. Never use permissive default fallbacks (`$val ?? 'default'`) when expected schema properties are missing from the client Canvas JSON.
 2. Reject invalid payloads with informative, typed errors at the point of ingestion (`wp_send_json_error(...)` with HTTP 422).
+
 
 ---
 

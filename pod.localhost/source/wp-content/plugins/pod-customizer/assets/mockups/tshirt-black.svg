@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <radialGradient id="bgGradDark" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </radialGradient>
+    <filter id="dropShadowDark" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Background Studio Backdrop -->
+  <rect width="1200" height="1200" fill="url(#bgGradDark)"/>
+  
+  <!-- T-Shirt Body -->
+  <g filter="url(#dropShadowDark)">
+    <path d="M400,180 C440,240 540,250 600,250 C660,250 760,240 800,180 L960,260 L890,440 L810,400 L810,1020 C810,1035 795,1050 780,1050 L420,1050 C405,1050 390,1035 390,1020 L390,400 L310,440 L240,260 Z" 
+          fill="#18181b" stroke="#27272a" stroke-width="4"/>
+    
+    <!-- Collar -->
+    <path d="M400,180 C460,250 540,260 600,260 C660,260 740,250 800,180 C740,225 660,235 600,235 C540,235 460,225 400,180 Z" 
+          fill="#27272a" stroke="#3f3f46" stroke-width="3"/>
+
+    <!-- Subtle Highlights -->
+    <path d="M390,400 C430,420 480,430 520,440" stroke="#27272a" stroke-width="4" fill="none"/>
+    <path d="M810,400 C770,420 720,430 680,440" stroke="#27272a" stroke-width="4" fill="none"/>
+    
+    <!-- Printable Area Guide Box (Subtle) -->
+    <rect x="420" y="320" width="360" height="520" rx="12" fill="none" stroke="#3f3f46" stroke-dasharray="6,6" stroke-width="2"/>
+  </g>
+</svg>
