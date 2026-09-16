@@ -23,7 +23,7 @@ Every AI agent working on this repository MUST strictly consult and adhere to th
 | :--- | :--- |
 | [`.specify/constitution.md`](file:///.specify/constitution.md) | **Project Constitution**: Core rules, architecture separation (WordPress vs Backend Render Engine), strict data contracts, and quality standards. |
 | [`.specify/project.md`](file:///.specify/project.md) | **Project Overview**: System architecture blueprint, local domains (`pod.localhost`, `pod-backend.localhost`), tech stack, and 5 development phases. |
-| [`.specify/execution_rules.md`](file:///.specify/execution_rules.md) | **Execution & Quality Rules**: Strict PHP rules (DRY, SOLID - SRP/OCP/DIP, WPCS, PSR-4), Node.js Sharp rules, and AI Verification Command Contract. |
+| [`.specify/workflows.md`](file:///.specify/workflows.md) | **Workflows & Diagrams**: End-to-end Sequence diagram (User Add-to-Cart -> Delivery) and Admin Dashboard Flowchart. |
 | [`specs/`](file:///specs/) | **Feature Specifications**: Phased tasks and acceptance criteria (e.g. `specs/001-local-environment-setup/`, `specs/002-plugin-architecture-boilerplate/`, `specs/003-backend-render-engine/`). |
 | [`.specify/research/`](file:///.specify/research/) | **Research & Notes**: Architecture comparisons, CustomMax analysis, and background documentation. |
 

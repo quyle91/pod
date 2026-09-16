@@ -48,6 +48,9 @@ graph LR
     Engine -->|Print File URL / Callback| Plugin
 ```
 
+> [!NOTE]
+> Chi tiết toàn bộ sơ đồ tuần tự (End-to-End Sequence Diagram) và quy trình làm việc của Admin trong Dashboard được đặc tả tại [**`.specify/workflows.md`**](./workflows.md).
+
 ---
 
 ## 3. Sub-Domains & Local Development Environment
