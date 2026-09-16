@@ -1,0 +1,82 @@
+# Project Blueprint - POD Customizer & Render Engine
+
+---
+title: "Project Overview"
+updated_at: 2026-09-16T00:00:00Z
+updated_by: Antigravity
+status: APPROVED_FOR_DEVELOPMENT
+version: 1.0
+---
+
+## 1. Project Vision
+
+Develop an end-to-end Print-on-Demand (POD) personalization solution for WooCommerce, mirroring the architecture and performance advantages of leading Shopify solutions (e.g., CustomMax).
+
+The platform allows buyers to customize products in real time on the WooCommerce product page (text, fonts, clipart variants, uploaded photos, color choices) and automatically produces high-resolution 300 DPI print-ready production files when orders are placed, with zero server degradation on WordPress.
+
+---
+
+## 2. System Architecture Overview
+
+```mermaid
+graph LR
+    subgraph Client Browser
+        UI[Product Page Storefront]
+        Canvas[Fabric.js / Konva Live Preview]
+    end
+
+    subgraph "pod.localhost (WordPress / Docker)"
+        WP[WordPress Core]
+        WC[WooCommerce]
+        Plugin[pod-customizer Plugin]
+        DB[(MySQL 8.4)]
+    end
+
+    subgraph "pod-backend.localhost (Node.js / Docker)"
+        API[Express / Fastify REST API]
+        Queue[Render Task Queue]
+        Engine[Sharp / Libvips 300 DPI Engine]
+    end
+
+    UI --> Canvas
+    Canvas -->|Serialize JSON State| Plugin
+    Plugin --> WC
+    WC --> DB
+    WC -->|Order Processing Webhook| API
+    API --> Queue
+    Queue --> Engine
+    Engine -->|Print File URL / Callback| Plugin
+```
+
+---
+
+## 3. Sub-Domains & Local Development Environment
+
+| Domain | Role | Tech Stack | Container Port |
+| :--- | :--- | :--- | :--- |
+| `pod.localhost` | E-commerce Storefront, Admin, Plugin | WordPress 6.x, PHP 8.2-FPM, Nginx, MySQL 8.4 | Port 80 (routed by Traefik) |
+| `pod-backend.localhost` | Graphics Worker, Webhook API, Render Engine | Node.js 20 LTS, Sharp, Express/Fastify | Port 3001 (routed by Traefik) |
+
+---
+
+## 4. Key Milestones & Phases
+
+* **Phase 1: Local Infrastructure Setup**
+  * Traefik integration on `proxy_network`.
+  * Multi-container setup for `pod.localhost` and `pod-backend.localhost`.
+  * Connectivity and routing healthchecks.
+* **Phase 2: Core Plugin Boilerplate (`pod-customizer`)**
+  * PSR-4 structure adhering to SOLID/DRY.
+  * WooCommerce hooks: Cart item custom data, Order item meta persistence, Admin order display.
+  * Settings page with Backend Worker URL and secret token authentication.
+* **Phase 3: Backend Render Worker Boilerplate**
+  * Node.js + Express with `sharp` installed.
+  * Healthcheck endpoint (`/health`) and Render task endpoint (`/api/v1/render`).
+  * Asynchronous queue scaffolding.
+* **Phase 4: Storefront Personalization & Canvas Preview**
+  * Lightweight canvas integration on WooCommerce single product pages.
+  * JSON state generator matching strict data contract.
+* **Phase 5: Automated E2E Order-to-Print Flow**
+  * Webhook dispatch on order status change.
+  * Sharp 300 DPI layer compositing.
+  * Order meta update with high-resolution download link.

@@ -1,0 +1,19 @@
+{
+  "name": "pod/pod-customizer",
+  "description": "Enterprise Print on Demand & Live Personalization Plugin for WooCommerce",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Antigravity & quyle91"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "PodCustomizer\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=8.1"
+  }
+}

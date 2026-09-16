@@ -1,0 +1,92 @@
+<?php
+
+namespace PodCustomizer\WooCommerce;
+
+use PodCustomizer\Contracts\HandlerInterface;
+use PodCustomizer\Contracts\DispatcherInterface;
+
+/**
+ * Class OrderWebhookDispatcher
+ * Listens for order status changes and dispatches render tasks to backend worker.
+ */
+class OrderWebhookDispatcher implements HandlerInterface, DispatcherInterface {
+
+    /**
+     * {@inheritdoc}
+     */
+    public function register_hooks(): void {
+        add_action('woocommerce_order_status_processing', [$this, 'on_order_processing'], 10, 1);
+        add_action('woocommerce_order_status_completed', [$this, 'on_order_processing'], 10, 1);
+    }
+
+    /**
+     * Triggered when an order status changes to processing.
+     *
+     * @param int $order_id
+     * @return void
+     */
+    public function on_order_processing(int $order_id): void {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $raw_state = $item->get_meta(OrderHandler::ORDER_ITEM_META_STATE);
+            $print_status = $item->get_meta(OrderHandler::ORDER_ITEM_META_PRINT_STATUS);
+
+            // Only dispatch if customized and not yet processed
+            if (!empty($raw_state) && $print_status !== 'completed') {
+                $canvas_state = json_decode($raw_state, true);
+                if (is_array($canvas_state)) {
+                    $this->dispatch($order_id, (int)$item_id, $canvas_state);
+                }
+            }
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function dispatch(int $order_id, int $item_id, array $canvas_state): array {
+        $backend_url = get_option('pod_backend_url', 'http://pod-backend.localhost');
+        $shared_secret = get_option('pod_shared_secret', 'pod_secret_token_123456');
+
+        $endpoint = rtrim($backend_url, '/') . '/api/v1/render';
+        $callback_url = rest_url('pod-customizer/v1/render-callback');
+
+        $payload = [
+            'order_id'     => $order_id,
+            'item_id'      => $item_id,
+            'canvas_state' => $canvas_state,
+            'callback_url' => $callback_url,
+        ];
+
+        // Allow filters on outgoing payload (Open/Closed Principle)
+        $payload = apply_filters('pod_customizer_outgoing_render_payload', $payload, $order_id, $item_id);
+
+        $response = wp_remote_post($endpoint, [
+            'method'      => 'POST',
+            'timeout'     => 15,
+            'headers'     => [
+                'Content-Type'  => 'application/json',
+                'X-POD-SECRET'  => $shared_secret,
+            ],
+            'body'        => wp_json_encode($payload),
+            'data_format' => 'body',
+        ]);
+
+        if (is_wp_error($response)) {
+            error_log('[POD Customizer] Webhook dispatch failed: ' . $response->get_error_message());
+            return [
+                'success' => false,
+                'error'   => $response->get_error_message(),
+            ];
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $decoded = json_decode($body, true);
+
+        return is_array($decoded) ? $decoded : ['success' => true, 'raw' => $body];
+    }
+}

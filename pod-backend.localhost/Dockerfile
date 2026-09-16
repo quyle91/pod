@@ -1,0 +1,27 @@
+FROM node:20-bookworm-slim
+
+# Install system dependencies if required for canvas/fonts/graphics
+RUN apt-get update && apt-get install -y \
+    curl \
+    fontconfig \
+    fonts-dejavu \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package descriptors
+COPY package*.json ./
+
+# Install production and development dependencies
+RUN npm install
+
+# Copy application source
+COPY . .
+
+# Ensure storage directory exists
+RUN mkdir -p /app/storage/prints
+
+EXPOSE 3001
+
+CMD ["node", "src/server.js"]

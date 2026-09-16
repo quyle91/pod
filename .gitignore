@@ -1,0 +1,33 @@
+# Environment & Secrets
+# Note: Keep .env committed if needed for local docker defaults, or un-comment below:
+# .env
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node.js
+node_modules/
+dist/
+
+# Backend storage artifacts
+pod-backend.localhost/storage/prints/*
+!pod-backend.localhost/storage/prints/.gitkeep
+
+# WordPress dynamic and media files
+pod.localhost/source/wp-content/uploads/
+pod.localhost/source/wp-content/cache/
+pod.localhost/source/wp-content/upgrade/
+pod.localhost/source/wp-content/upgrade-temp-backup/
+pod.localhost/source/wp-content/wflogs/
+pod.localhost/source/wp-content/backups/
+pod.localhost/source/wp-content/ai1wm-backups/
+pod.localhost/source/wp-content/backup-db/
+pod.localhost/source/*.wpress
+pod.localhost/source/*.maintenance
