@@ -19,6 +19,13 @@ RUN npm install
 # Copy application source
 COPY . .
 
+# Install custom fonts into system fontconfig
+RUN if [ -d "/app/src/assets/fonts" ]; then \
+        mkdir -p /usr/local/share/fonts && \
+        cp /app/src/assets/fonts/*.ttf /usr/local/share/fonts/ && \
+        fc-cache -f; \
+    fi
+
 # Ensure storage directory exists
 RUN mkdir -p /app/storage/prints
 

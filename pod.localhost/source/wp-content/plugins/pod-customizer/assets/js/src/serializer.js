@@ -3,7 +3,7 @@
  * Produces strict CanvasLayer[] JSON data contract for WooCommerce and backend render engine.
  */
 
-import { state, elements, PREVIEW_SIZE, RENDER_SIZE, SCALE_RATIO } from './state.js';
+import { state, elements, template, PREVIEW_SIZE, RENDER_SIZE, SCALE_RATIO } from './state.js';
 
 export function serializeCanvasState() {
   const layers = [];
@@ -83,7 +83,7 @@ export function serializeCanvasState() {
     });
   }
 
-  return {
+  const serialized = {
     version: '1.0',
     canvas: {
       width: RENDER_SIZE,
@@ -97,6 +97,16 @@ export function serializeCanvasState() {
     },
     layers: layers,
   };
+
+  if (state.templateValues) {
+    serialized.template_payload = {
+      template_id: template?.id,
+      values: state.templateValues,
+      metrics: state.templateMetrics || {},
+    };
+  }
+
+  return serialized;
 }
 
 export function syncStateToForm() {

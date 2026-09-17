@@ -81,15 +81,19 @@ class CustomizerAssets implements HandlerInterface {
             true
         );
 
-        // 5. Localize Configuration & Visual Catalogs
+        // 5. Resolve Active Design Template (via ?pod_tpl= or Product Meta)
+        $active_template = \PodCustomizer\Services\TemplateLoader::get_active_template($product->get_id());
+
+        // 6. Localize Configuration & Visual Catalogs
         $config = [
             'ajaxUrl'    => admin_url('admin-ajax.php'),
             'pluginUrl'  => POD_CUSTOMIZER_URL,
             'productId'  => $product->get_id(),
+            'template'   => $active_template,
             'canvas'     => [
-                'width'  => 1200,
-                'height' => 1200,
-                'dpi'    => 300,
+                'width'  => $active_template['print_spec']['width_px'] ?? 1200,
+                'height' => $active_template['print_spec']['height_px'] ?? 1200,
+                'dpi'    => $active_template['print_spec']['dpi'] ?? 300,
                 'unit'   => 'px',
             ],
             'mockups'    => [

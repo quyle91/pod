@@ -1,0 +1,105 @@
+{
+  "id": "tpl_02",
+  "name": "Custom Ceramic Mug (Icon Badge & Auto-Fit Text)",
+  "category": "drinkware",
+  "product_title": "Personalized Badge Coffee Mug",
+  "print_spec": {
+    "width_px": 2400,
+    "height_px": 1050,
+    "dpi": 300
+  },
+  "mockup": {
+    "id": "mug_white",
+    "name": "Ceramic Mug",
+    "url": "assets/mockups/mug-white.svg",
+    "bounds": {
+      "x": 300,
+      "y": 180,
+      "width": 1800,
+      "height": 720
+    }
+  },
+  "fields": [
+    {
+      "id": "badge_icon",
+      "type": "preset_picker",
+      "label": "Choose Your Emblem / Icon",
+      "default_value": "crown",
+      "position": {
+        "x": 1200,
+        "y": 380,
+        "width_px": 120,
+        "height_px": 100
+      },
+      "options": [
+        {
+          "id": "crown",
+          "label": "Royal Crown",
+          "url": "assets/cliparts/crown.svg"
+        },
+        {
+          "id": "star",
+          "label": "Golden Star",
+          "url": "assets/cliparts/star.svg"
+        },
+        {
+          "id": "heart",
+          "label": "Love Heart",
+          "url": "assets/cliparts/heart.svg"
+        },
+        {
+          "id": "cat",
+          "label": "Playful Cat",
+          "url": "assets/cliparts/cat.svg"
+        },
+        {
+          "id": "dog",
+          "label": "Loyal Dog",
+          "url": "assets/cliparts/dog.svg"
+        }
+      ]
+    },
+    {
+      "id": "custom_name",
+      "type": "text",
+      "label": "Recipient Name",
+      "placeholder": "Enter custom name",
+      "default_value": "Jessica",
+      "position": {
+        "x": 1200,
+        "y": 560
+      },
+      "style": {
+        "font_family": "Montserrat",
+        "font_weight": "700",
+        "font_size_px": 72,
+        "min_font_size_px": 24,
+        "color": "#1e293b",
+        "align": "center",
+        "max_width_px": 900,
+        "rotation": 0
+      }
+    },
+    {
+      "id": "sub_quote",
+      "type": "text",
+      "label": "Sub-Text / Title",
+      "placeholder": "Enter title (e.g. World's Greatest Mom)",
+      "default_value": "BEST BOSS EVER",
+      "position": {
+        "x": 1200,
+        "y": 660
+      },
+      "style": {
+        "font_family": "Oswald",
+        "font_weight": "600",
+        "font_size_px": 42,
+        "min_font_size_px": 18,
+        "color": "#e11d48",
+        "align": "center",
+        "max_width_px": 800,
+        "rotation": 0
+      }
+    }
+  ]
+}

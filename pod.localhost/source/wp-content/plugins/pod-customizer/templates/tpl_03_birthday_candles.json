@@ -1,0 +1,115 @@
+{
+  "id": "tpl_03",
+  "name": "Birthday Celebration Mug (Candles Repeater & Auto-Fit Text)",
+  "category": "drinkware",
+  "product_title": "Custom Birthday Milestone Mug",
+  "print_spec": {
+    "width_px": 2400,
+    "height_px": 1050,
+    "dpi": 300
+  },
+  "mockup": {
+    "id": "mug_white",
+    "name": "Ceramic Mug",
+    "url": "assets/mockups/mug-white.svg",
+    "bounds": {
+      "x": 300,
+      "y": 180,
+      "width": 1800,
+      "height": 720
+    }
+  },
+  "fields": [
+    {
+      "id": "badge_icon",
+      "type": "preset_picker",
+      "label": "Celebration Icon",
+      "default_value": "crown",
+      "position": {
+        "x": 1200,
+        "y": 300,
+        "width_px": 90,
+        "height_px": 75
+      },
+      "options": [
+        {
+          "id": "crown",
+          "label": "Birthday Crown",
+          "url": "assets/cliparts/crown.svg"
+        },
+        {
+          "id": "star",
+          "label": "Superstar",
+          "url": "assets/cliparts/star.svg"
+        },
+        {
+          "id": "heart",
+          "label": "Sweet Heart",
+          "url": "assets/cliparts/heart.svg"
+        }
+      ]
+    },
+    {
+      "id": "candle_count",
+      "type": "repeater_counter",
+      "label": "Milestone Age (Candles Count)",
+      "default_value": 7,
+      "min": 1,
+      "max": 18,
+      "sub_image": {
+        "url": "assets/cliparts/candle.svg",
+        "width_px": 32,
+        "height_px": 64
+      },
+      "container_bounds": {
+        "x": 1200,
+        "y": 420,
+        "max_width_px": 720,
+        "gap_px": 14,
+        "distribution": "horizontal_center"
+      }
+    },
+    {
+      "id": "recipient_name",
+      "type": "text",
+      "label": "Birthday Person Name",
+      "placeholder": "Enter name (e.g. Nam Anh)",
+      "default_value": "Nam Anh",
+      "position": {
+        "x": 1200,
+        "y": 550
+      },
+      "style": {
+        "font_family": "Montserrat",
+        "font_weight": "700",
+        "font_size_px": 68,
+        "min_font_size_px": 22,
+        "color": "#1e293b",
+        "align": "center",
+        "max_width_px": 800,
+        "rotation": 0
+      }
+    },
+    {
+      "id": "birthday_wishes",
+      "type": "text",
+      "label": "Greeting / Message",
+      "placeholder": "Enter wishes (e.g. Wishing you endless joy!)",
+      "default_value": "Happy Birthday!",
+      "position": {
+        "x": 1200,
+        "y": 640
+      },
+      "style": {
+        "font_family": "Dancing Script",
+        "font_weight": "600",
+        "font_size_px": 44,
+        "min_font_size_px": 18,
+        "color": "#ec4899",
+        "align": "center",
+        "max_width_px": 750,
+        "rotation": 0
+      }
+    }
+  ]
+}

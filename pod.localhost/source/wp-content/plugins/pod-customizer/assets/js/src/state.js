@@ -5,14 +5,29 @@
 export const config = window.podCustomizerConfig || {};
 export const fabric = window.fabric;
 
+export const template = config.template || null;
+export const isTemplateMode = !!template;
+export const templateValues = {};
+export const templateMetrics = {};
+
+// Initialize default template values
+if (template && Array.isArray(template.fields)) {
+  template.fields.forEach((f) => {
+    templateValues[f.id] = f.default_value;
+  });
+}
+
 export const PREVIEW_SIZE = 600;
-export const RENDER_SIZE = config.canvas?.width || 1200;
-export const SCALE_RATIO = RENDER_SIZE / PREVIEW_SIZE; // e.g. 2.0
+export const RENDER_SIZE = template?.print_spec?.width_px || config.canvas?.width || 1200;
+export const SCALE_RATIO = RENDER_SIZE / PREVIEW_SIZE; // e.g. 4.0
 
 export const state = {
   canvas: null,
   mockupImg: null,
-  currentMockup: config.mockups?.[0] || null,
+  currentMockup: template?.mockup || config.mockups?.[0] || null,
+  templateValues: templateValues,
+  templateMetrics: templateMetrics,
+  templateObjects: {}, // Map of field_id -> fabric object or array of objects
   editingTextObj: null,
   editingClipartObj: null,
   editingPhotoObj: null,

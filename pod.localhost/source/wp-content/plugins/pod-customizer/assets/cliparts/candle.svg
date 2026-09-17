@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="100" height="200">
+  <!-- Candle Flame -->
+  <path d="M50,15 C58,35 65,55 58,70 C53,80 43,80 38,70 C32,55 42,35 50,15 Z" fill="#f59e0b" />
+  <path d="M50,30 C54,42 58,54 54,64 C51,70 46,70 43,64 C40,54 46,42 50,30 Z" fill="#fef08a" />
+  <!-- Wick -->
+  <line x1="50" y1="70" x2="50" y2="85" stroke="#475569" stroke-width="4" stroke-linecap="round" />
+  <!-- Candle Body -->
+  <rect x="25" y="85" width="50" height="110" rx="6" fill="#ec4899" />
+  <!-- Decorative Stripes -->
+  <path d="M25,110 L75,95" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" />
+  <path d="M25,145 L75,130" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" />
+  <path d="M25,180 L75,165" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" />
+</svg>

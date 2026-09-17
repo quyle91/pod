@@ -2,13 +2,25 @@
   // assets/js/src/state.js
   var config = window.podCustomizerConfig || {};
   var fabric = window.fabric;
+  var template = config.template || null;
+  var templateValues = {};
+  var templateMetrics = {};
+  if (template && Array.isArray(template.fields)) {
+    template.fields.forEach((f) => {
+      templateValues[f.id] = f.default_value;
+    });
+  }
   var PREVIEW_SIZE = 600;
-  var RENDER_SIZE = config.canvas?.width || 1200;
+  var RENDER_SIZE = template?.print_spec?.width_px || config.canvas?.width || 1200;
   var SCALE_RATIO = RENDER_SIZE / PREVIEW_SIZE;
   var state = {
     canvas: null,
     mockupImg: null,
-    currentMockup: config.mockups?.[0] || null,
+    currentMockup: template?.mockup || config.mockups?.[0] || null,
+    templateValues,
+    templateMetrics,
+    templateObjects: {},
+    // Map of field_id -> fabric object or array of objects
     editingTextObj: null,
     editingClipartObj: null,
     editingPhotoObj: null
@@ -92,6 +104,13 @@
     }
     return fallback;
   }
+  function debounce(func, wait = 100) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
 
   // assets/js/src/serializer.js
   function serializeCanvasState() {
@@ -165,7 +184,7 @@
         }
       });
     }
-    return {
+    const serialized = {
       version: "1.0",
       canvas: {
         width: RENDER_SIZE,
@@ -179,6 +198,14 @@
       },
       layers
     };
+    if (state.templateValues) {
+      serialized.template_payload = {
+        template_id: template?.id,
+        values: state.templateValues,
+        metrics: state.templateMetrics || {}
+      };
+    }
+    return serialized;
   }
   function syncStateToForm() {
     if (!elements.stateInput || !state.canvas) return;
@@ -849,6 +876,200 @@
     renderAllLayerLists();
     syncStateToForm();
   }
+  function getTemplateScale() {
+    const designWidth = config.template?.print_spec?.width_px || 2400;
+    return PREVIEW_SIZE / designWidth;
+  }
+  function renderAllTemplateFields() {
+    if (!config.template || !Array.isArray(config.template.fields)) return;
+    config.template.fields.forEach((field) => {
+      const val = state.templateValues ? state.templateValues[field.id] : void 0;
+      updateTemplateField(field.id, val);
+    });
+  }
+  function updateTemplateField(fieldId, value) {
+    if (!state.canvas || !config.template) return;
+    const field = (config.template.fields || []).find((f) => f.id === fieldId);
+    if (!field) return;
+    const scale = getTemplateScale();
+    if (field.type === "text") {
+      renderTextSlot(field, value, scale);
+    } else if (field.type === "preset_picker") {
+      renderPresetImageSlot(field, value, scale);
+    } else if (field.type === "repeater_counter") {
+      renderRepeaterSlot(field, value, scale);
+    }
+  }
+  function renderTextSlot(field, value, scale) {
+    const text = value !== void 0 ? String(value) : field.default_value || "";
+    const x = (field.position.x || 1200) * scale;
+    const y = (field.position.y || 1200) * scale;
+    const initialFontSize = (field.style.font_size_px || 60) * scale;
+    const minFontSize = (field.style.min_font_size_px || 18) * scale;
+    const maxWidth = (field.style.max_width_px || 800) * scale;
+    const fontFamily = field.style.font_family || "Montserrat";
+    const color = field.style.color || "#1e293b";
+    const rotation = field.style.rotation || 0;
+    const align = field.style.align || "center";
+    if (state.templateObjects[field.id]) {
+      state.canvas.remove(state.templateObjects[field.id]);
+      delete state.templateObjects[field.id];
+    }
+    if (!text.trim()) {
+      if (state.templateMetrics) {
+        state.templateMetrics[field.id] = { effectiveFontSize: initialFontSize, isShrunk: false };
+      }
+      state.canvas.renderAll();
+      syncStateToForm();
+      return;
+    }
+    const textObj = new fabric.Text(text, {
+      left: x,
+      top: y,
+      fontFamily,
+      fontSize: initialFontSize,
+      fontWeight: field.style.font_weight || "normal",
+      fill: color,
+      textAlign: align,
+      originX: align === "center" ? "center" : align === "right" ? "right" : "left",
+      originY: "middle",
+      angle: rotation,
+      selectable: false,
+      evented: false,
+      podType: "text",
+      podFieldId: field.id
+    });
+    const measuredWidth = textObj.width;
+    let effectiveFontSize = initialFontSize;
+    let isShrunk = false;
+    if (measuredWidth > maxWidth && measuredWidth > 0) {
+      const shrinkRatio = maxWidth / measuredWidth;
+      effectiveFontSize = Math.max(minFontSize, Math.floor(initialFontSize * shrinkRatio));
+      textObj.set("fontSize", effectiveFontSize);
+      textObj.initDimensions();
+      textObj.setCoords();
+      isShrunk = true;
+    }
+    if (state.templateMetrics) {
+      state.templateMetrics[field.id] = {
+        effectiveFontSize: Math.round(effectiveFontSize / scale),
+        isShrunk
+      };
+    }
+    state.templateObjects[field.id] = textObj;
+    state.canvas.add(textObj);
+    state.canvas.bringToFront(textObj);
+    state.canvas.renderAll();
+    syncStateToForm();
+  }
+  function renderPresetImageSlot(field, value, scale) {
+    const optionId = value || field.default_value || field.options?.[0]?.id;
+    const option = (field.options || []).find((o) => o.id === optionId) || field.options?.[0];
+    if (!option || !option.url) return;
+    const x = (field.position.x || 1200) * scale;
+    const y = (field.position.y || 1200) * scale;
+    const targetW = (field.position.width_px || 100) * scale;
+    const targetH = (field.position.height_px || 100) * scale;
+    if (state.templateObjects[field.id]) {
+      state.canvas.remove(state.templateObjects[field.id]);
+      delete state.templateObjects[field.id];
+    }
+    fabric.loadSVGFromURL(option.url, (objects, options) => {
+      if (!objects || !objects.length) return;
+      const svgObj = fabric.util.groupSVGElements(objects, options);
+      svgObj.set({
+        left: x,
+        top: y,
+        originX: "center",
+        originY: "middle",
+        selectable: false,
+        evented: false,
+        podType: "clipart",
+        clipartName: option.label || option.id,
+        clipartUrl: option.url,
+        podFieldId: field.id
+      });
+      svgObj.scaleToWidth(targetW);
+      if (svgObj.getScaledHeight() > targetH) {
+        svgObj.scaleToHeight(targetH);
+      }
+      state.templateObjects[field.id] = svgObj;
+      state.canvas.add(svgObj);
+      state.canvas.bringToFront(svgObj);
+      state.canvas.renderAll();
+      syncStateToForm();
+    });
+  }
+  function renderRepeaterSlot(field, value, scale) {
+    const min = field.min !== void 0 ? field.min : 1;
+    const max = field.max !== void 0 ? field.max : 20;
+    let count = parseInt(value !== void 0 ? value : field.default_value || min, 10);
+    if (isNaN(count)) count = min;
+    count = Math.max(min, Math.min(max, count));
+    const container = field.container_bounds || {};
+    const centerX = (container.x || 1200) * scale;
+    const centerY = (container.y || 400) * scale;
+    const maxContainerW = (container.max_width_px || 700) * scale;
+    const subImg = field.sub_image || {};
+    let itemW = (subImg.width_px || 32) * scale;
+    let itemH = (subImg.height_px || 64) * scale;
+    let baseGap = (container.gap_px || 12) * scale;
+    if (state.templateObjects[field.id]) {
+      if (Array.isArray(state.templateObjects[field.id])) {
+        state.templateObjects[field.id].forEach((obj) => state.canvas.remove(obj));
+      } else {
+        state.canvas.remove(state.templateObjects[field.id]);
+      }
+      state.templateObjects[field.id] = [];
+    }
+    const url = subImg.url;
+    if (!url) return;
+    fabric.loadSVGFromURL(url, (objects, options) => {
+      if (!objects || !objects.length) return;
+      let gap = baseGap;
+      let totalW = count * itemW + (count - 1) * gap;
+      if (totalW > maxContainerW && count > 1) {
+        gap = (maxContainerW - count * itemW) / (count - 1);
+        if (gap < 2) {
+          const shrinkFactor = maxContainerW / (count * itemW + (count - 1) * 2);
+          itemW *= shrinkFactor;
+          itemH *= shrinkFactor;
+          gap = 2;
+          totalW = count * itemW + (count - 1) * gap;
+        } else {
+          totalW = count * itemW + (count - 1) * gap;
+        }
+      }
+      const startX = centerX - totalW / 2 + itemW / 2;
+      const createdObjs = [];
+      for (let i = 0; i < count; i++) {
+        const posX = startX + i * (itemW + gap);
+        const itemObj = fabric.util.groupSVGElements(objects, options);
+        itemObj.set({
+          left: posX,
+          top: centerY,
+          originX: "center",
+          originY: "middle",
+          selectable: false,
+          evented: false,
+          podType: "clipart",
+          clipartName: "Repeater Item",
+          clipartUrl: url,
+          podFieldId: field.id
+        });
+        itemObj.scaleToWidth(itemW);
+        if (itemObj.getScaledHeight() > itemH) {
+          itemObj.scaleToHeight(itemH);
+        }
+        state.canvas.add(itemObj);
+        state.canvas.bringToFront(itemObj);
+        createdObjs.push(itemObj);
+      }
+      state.templateObjects[field.id] = createdObjs;
+      state.canvas.renderAll();
+      syncStateToForm();
+    });
+  }
 
   // assets/js/src/cart.js
   function onAddToCartSubmit(e) {
@@ -876,6 +1097,124 @@
     }
   }
 
+  // assets/js/src/form.js
+  function initTemplateForm(template2, values, onFieldChange) {
+    const container = document.getElementById("pod-template-form-fields");
+    if (!container || !template2 || !Array.isArray(template2.fields)) return;
+    container.innerHTML = "";
+    template2.fields.forEach((field) => {
+      const fieldGroup = document.createElement("div");
+      fieldGroup.className = "pod-form-group";
+      fieldGroup.setAttribute("data-field-id", field.id);
+      const label = document.createElement("label");
+      label.className = "pod-form-label";
+      label.textContent = field.label || field.id;
+      fieldGroup.appendChild(label);
+      if (field.type === "text") {
+        renderTextInput(fieldGroup, field, values[field.id], onFieldChange);
+      } else if (field.type === "preset_picker") {
+        renderPresetPicker(fieldGroup, field, values[field.id], onFieldChange);
+      } else if (field.type === "repeater_counter") {
+        renderRepeaterCounter(fieldGroup, field, values[field.id], onFieldChange);
+      }
+      container.appendChild(fieldGroup);
+    });
+  }
+  function renderTextInput(parent, field, currentValue, onFieldChange) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pod-input-wrapper";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "pod-form-input";
+    input.id = `pod-field-${field.id}`;
+    input.placeholder = field.placeholder || "";
+    input.value = currentValue !== void 0 ? currentValue : field.default_value || "";
+    const debouncedChange = debounce((val) => {
+      onFieldChange(field.id, val);
+    }, 60);
+    input.addEventListener("input", (e) => {
+      debouncedChange(e.target.value);
+    });
+    wrapper.appendChild(input);
+    parent.appendChild(wrapper);
+  }
+  function renderPresetPicker(parent, field, currentValue, onFieldChange) {
+    const grid = document.createElement("div");
+    grid.className = "pod-preset-grid";
+    const activeId = currentValue || field.default_value || field.options?.[0]?.id;
+    (field.options || []).forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `pod-preset-btn ${opt.id === activeId ? "active" : ""}`;
+      btn.setAttribute("data-option-id", opt.id);
+      btn.title = opt.label || opt.id;
+      btn.innerHTML = `
+      <div class="pod-preset-thumb">
+        <img src="${opt.url}" alt="${opt.label || opt.id}" />
+      </div>
+      <span class="pod-preset-label">${opt.label || opt.id}</span>
+    `;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        grid.querySelectorAll(".pod-preset-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        onFieldChange(field.id, opt.id);
+      });
+      grid.appendChild(btn);
+    });
+    parent.appendChild(grid);
+  }
+  function renderRepeaterCounter(parent, field, currentValue, onFieldChange) {
+    const min = field.min !== void 0 ? field.min : 1;
+    const max = field.max !== void 0 ? field.max : 20;
+    let val = parseInt(currentValue !== void 0 ? currentValue : field.default_value || min, 10);
+    if (isNaN(val)) val = min;
+    const stepper = document.createElement("div");
+    stepper.className = "pod-stepper-control";
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.className = "pod-stepper-btn minus";
+    btnMinus.textContent = "\u2212";
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "pod-stepper-input";
+    input.value = val;
+    input.min = min;
+    input.max = max;
+    input.readOnly = true;
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.className = "pod-stepper-btn plus";
+    btnPlus.textContent = "+";
+    const helperText = document.createElement("span");
+    helperText.className = "pod-stepper-hint";
+    helperText.textContent = `${field.sub_image ? "Items" : "Count"}: min ${min}, max ${max}`;
+    function updateValue(newVal) {
+      if (newVal < min) newVal = min;
+      if (newVal > max) newVal = max;
+      val = newVal;
+      input.value = val;
+      btnMinus.disabled = val <= min;
+      btnPlus.disabled = val >= max;
+      onFieldChange(field.id, val);
+    }
+    btnMinus.addEventListener("click", (e) => {
+      e.preventDefault();
+      updateValue(val - 1);
+    });
+    btnPlus.addEventListener("click", (e) => {
+      e.preventDefault();
+      updateValue(val + 1);
+    });
+    stepper.appendChild(btnMinus);
+    stepper.appendChild(input);
+    stepper.appendChild(btnPlus);
+    stepper.appendChild(helperText);
+    btnMinus.disabled = val <= min;
+    btnPlus.disabled = val >= max;
+    parent.appendChild(stepper);
+  }
+
   // assets/js/src/main.js
   function init() {
     if (typeof window.podCustomizerConfig === "undefined" || typeof window.fabric === "undefined") {
@@ -883,10 +1222,49 @@
       return;
     }
     initCanvas();
-    renderMockupGrid();
-    renderClipartGrid();
-    bindGlobalEvents();
-    loadInitialLayers();
+    if (config.template) {
+      initTemplateMode();
+    } else {
+      renderMockupGrid();
+      renderClipartGrid();
+      bindGlobalEvents();
+      loadInitialLayers();
+    }
+  }
+  function initTemplateMode() {
+    const tpl = config.template;
+    if (tpl.mockup && tpl.mockup.url) {
+      loadMockupImage(tpl.mockup.url);
+    }
+    initTemplateForm(tpl, state.templateValues, (fieldId, newValue) => {
+      state.templateValues[fieldId] = newValue;
+      updateTemplateField(fieldId, newValue);
+    });
+    const fontsPromise = document.fonts ? document.fonts.ready : Promise.resolve();
+    fontsPromise.then(() => {
+      renderAllTemplateFields();
+      if (elements.loading) {
+        elements.loading.style.opacity = "0";
+        setTimeout(() => elements.loading.style.display = "none", 300);
+      }
+    });
+    if (elements.btnReset) {
+      elements.btnReset.addEventListener("click", () => {
+        if (Array.isArray(tpl.fields)) {
+          tpl.fields.forEach((f) => {
+            state.templateValues[f.id] = f.default_value;
+          });
+          initTemplateForm(tpl, state.templateValues, (fieldId, newValue) => {
+            state.templateValues[fieldId] = newValue;
+            updateTemplateField(fieldId, newValue);
+          });
+          renderAllTemplateFields();
+        }
+      });
+    }
+    if (elements.addToCartForm) {
+      elements.addToCartForm.addEventListener("submit", onAddToCartSubmit);
+    }
   }
   function bindGlobalEvents() {
     const tabBtns = document.querySelectorAll(".pod-tab-btn");

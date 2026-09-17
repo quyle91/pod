@@ -1,0 +1,66 @@
+{
+  "id": "tpl_01",
+  "name": "Classic Custom T-Shirt (Auto-Fit Text & Angle)",
+  "category": "apparel",
+  "product_title": "Personalized Slogan T-Shirt",
+  "print_spec": {
+    "width_px": 2400,
+    "height_px": 2400,
+    "dpi": 300
+  },
+  "mockup": {
+    "id": "tshirt_white",
+    "name": "White T-Shirt",
+    "url": "assets/mockups/tshirt-white.svg",
+    "bounds": {
+      "x": 650,
+      "y": 650,
+      "width": 1100,
+      "height": 1200
+    }
+  },
+  "fields": [
+    {
+      "id": "recipient_name",
+      "type": "text",
+      "label": "Recipient / Main Name",
+      "placeholder": "Enter name (e.g. Alex Henderson)",
+      "default_value": "Alex",
+      "position": {
+        "x": 1200,
+        "y": 1050
+      },
+      "style": {
+        "font_family": "Montserrat",
+        "font_weight": "700",
+        "font_size_px": 80,
+        "min_font_size_px": 28,
+        "color": "#18181b",
+        "align": "center",
+        "max_width_px": 900,
+        "rotation": 0
+      }
+    },
+    {
+      "id": "slogan_text",
+      "type": "text",
+      "label": "Sub-Text / Slogan (Angled)",
+      "placeholder": "Enter slogan (e.g. Vintage Legend Since 1990)",
+      "default_value": "VINTAGE LEGEND",
+      "position": {
+        "x": 1200,
+        "y": 1250
+      },
+      "style": {
+        "font_family": "Oswald",
+        "font_weight": "700",
+        "font_size_px": 54,
+        "min_font_size_px": 22,
+        "color": "#4f46e5",
+        "align": "center",
+        "max_width_px": 800,
+        "rotation": -8
+      }
+    }
+  ]
+}

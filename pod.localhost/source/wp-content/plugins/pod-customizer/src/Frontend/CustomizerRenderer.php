@@ -42,16 +42,16 @@ class CustomizerRenderer implements HandlerInterface {
             return;
         }
 
-        $this->rendered = true;
-
+        $active_template = \PodCustomizer\Services\TemplateLoader::get_active_template($product->get_id());
+        $is_template_mode = !empty($active_template);
         ?>
-        <div id="pod-customizer-app" class="pod-customizer-app">
+        <div id="pod-customizer-app" class="pod-customizer-app <?php echo $is_template_mode ? 'pod-is-template-mode' : ''; ?>">
             <div class="pod-header">
                 <div class="pod-header-title">
                     <span class="pod-icon">🎨</span>
-                    <h4><?php esc_html_e('Customize Your Design', 'pod-customizer'); ?></h4>
+                    <h4><?php echo $is_template_mode ? esc_html($active_template['product_title'] ?? __('Personalize Product', 'pod-customizer')) : esc_html__('Customize Your Design', 'pod-customizer'); ?></h4>
                 </div>
-                <span class="pod-live-badge"><?php esc_html_e('Live 3D/2D Preview', 'pod-customizer'); ?></span>
+                <span class="pod-live-badge"><?php esc_html_e('Live 2D Preview', 'pod-customizer'); ?></span>
             </div>
 
             <div class="pod-workspace">
@@ -68,80 +68,98 @@ class CustomizerRenderer implements HandlerInterface {
                         <button type="button" class="pod-btn-tool" id="pod-btn-reset" title="<?php esc_attr_e('Reset to Default', 'pod-customizer'); ?>">
                             🔄 <?php esc_html_e('Reset', 'pod-customizer'); ?>
                         </button>
-                        <span class="pod-canvas-hint"><?php esc_html_e('Tip: Click on elements on canvas to drag or resize', 'pod-customizer'); ?></span>
+                        <span class="pod-canvas-hint">
+                            <?php echo $is_template_mode ? esc_html__('Tip: Fill in the options on the right to customize your live preview', 'pod-customizer') : esc_html__('Tip: Click on elements on canvas to drag or resize', 'pod-customizer'); ?>
+                        </span>
                     </div>
                 </div>
 
                 <!-- Right Visual: Tool Controls -->
                 <div class="pod-controls-container">
-                    <!-- Nav Tabs -->
-                    <div class="pod-tabs-nav" role="tablist">
-                        <button type="button" class="pod-tab-btn active" data-tab="tab-base">
-                            👕 <span><?php esc_html_e('Base', 'pod-customizer'); ?></span>
-                        </button>
-                        <button type="button" class="pod-tab-btn" data-tab="tab-text">
-                            ✍️ <span><?php esc_html_e('Text', 'pod-customizer'); ?></span>
-                        </button>
-                        <button type="button" class="pod-tab-btn" data-tab="tab-clipart">
-                            🎨 <span><?php esc_html_e('Clipart', 'pod-customizer'); ?></span>
-                        </button>
-                        <button type="button" class="pod-tab-btn" data-tab="tab-upload">
-                            📷 <span><?php esc_html_e('Photo', 'pod-customizer'); ?></span>
-                        </button>
-                    </div>
-
-                    <!-- Tab Contents -->
-                    <div class="pod-tabs-content">
-                        <!-- 1. Base Product Mockup Tab -->
-                        <div class="pod-tab-pane active" id="tab-base">
-                            <label class="pod-control-label"><?php esc_html_e('Select Product Variant & Color', 'pod-customizer'); ?></label>
-                            <div class="pod-mockups-grid" id="pod-mockups-grid">
-                                <!-- Populated dynamically by JS from config -->
+                    <?php if ($is_template_mode): ?>
+                        <!-- Template-Driven Personalization Form -->
+                        <div class="pod-template-form-container" id="pod-template-form-container">
+                            <div class="pod-template-form-header">
+                                <h5 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #1e293b;">
+                                    <?php echo esc_html($active_template['name']); ?>
+                                </h5>
+                                <p style="margin: 0 0 16px; font-size: 12px; color: #64748b;">
+                                    <?php esc_html_e('Customize the options below to personalize your item in real time.', 'pod-customizer'); ?>
+                                </p>
+                            </div>
+                            <div class="pod-template-form-fields" id="pod-template-form-fields">
+                                <!-- Populated dynamically by form.js from active template fields -->
                             </div>
                         </div>
-
-                        <!-- 2. Text Tab -->
-                        <div class="pod-tab-pane" id="tab-text">
-                            <div class="pod-pane-header">
-                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Custom Text Lines', 'pod-customizer'); ?></label>
-                                <button type="button" class="pod-btn-add" id="pod-btn-add-text">
-                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
-                                    <span><?php esc_html_e('Add Text', 'pod-customizer'); ?></span>
-                                </button>
-                            </div>
-                            <div class="pod-layer-list" id="pod-text-list">
-                                <!-- Populated dynamically by JS -->
-                            </div>
+                    <?php else: ?>
+                        <!-- Nav Tabs for Legacy Free-Form Canvas -->
+                        <div class="pod-tabs-nav" role="tablist">
+                            <button type="button" class="pod-tab-btn active" data-tab="tab-base">
+                                👕 <span><?php esc_html_e('Base', 'pod-customizer'); ?></span>
+                            </button>
+                            <button type="button" class="pod-tab-btn" data-tab="tab-text">
+                                ✍️ <span><?php esc_html_e('Text', 'pod-customizer'); ?></span>
+                            </button>
+                            <button type="button" class="pod-tab-btn" data-tab="tab-clipart">
+                                🎨 <span><?php esc_html_e('Clipart', 'pod-customizer'); ?></span>
+                            </button>
+                            <button type="button" class="pod-tab-btn" data-tab="tab-upload">
+                                📷 <span><?php esc_html_e('Photo', 'pod-customizer'); ?></span>
+                            </button>
                         </div>
 
-                        <!-- 3. Clipart Tab -->
-                        <div class="pod-tab-pane" id="tab-clipart">
-                            <div class="pod-pane-header">
-                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Clipart Layers', 'pod-customizer'); ?></label>
-                                <button type="button" class="pod-btn-add" id="pod-btn-add-clipart">
-                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
-                                    <span><?php esc_html_e('Add Clipart', 'pod-customizer'); ?></span>
-                                </button>
+                        <!-- Tab Contents -->
+                        <div class="pod-tabs-content">
+                            <!-- 1. Base Product Mockup Tab -->
+                            <div class="pod-tab-pane active" id="tab-base">
+                                <label class="pod-control-label"><?php esc_html_e('Select Product Variant & Color', 'pod-customizer'); ?></label>
+                                <div class="pod-mockups-grid" id="pod-mockups-grid">
+                                    <!-- Populated dynamically by JS from config -->
+                                </div>
                             </div>
-                            <div class="pod-layer-list" id="pod-clipart-list">
-                                <!-- Populated dynamically by JS -->
-                            </div>
-                        </div>
 
-                        <!-- 4. Photo Upload Tab -->
-                        <div class="pod-tab-pane" id="tab-upload">
-                            <div class="pod-pane-header">
-                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Photo Layers', 'pod-customizer'); ?></label>
-                                <button type="button" class="pod-btn-add" id="pod-btn-add-photo">
-                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
-                                    <span><?php esc_html_e('Add Photo', 'pod-customizer'); ?></span>
-                                </button>
+                            <!-- 2. Text Tab -->
+                            <div class="pod-tab-pane" id="tab-text">
+                                <div class="pod-pane-header">
+                                    <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Custom Text Lines', 'pod-customizer'); ?></label>
+                                    <button type="button" class="pod-btn-add" id="pod-btn-add-text">
+                                        <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                        <span><?php esc_html_e('Add Text', 'pod-customizer'); ?></span>
+                                    </button>
+                                </div>
+                                <div class="pod-layer-list" id="pod-text-list">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
                             </div>
-                            <div class="pod-layer-list" id="pod-photo-list">
-                                <!-- Populated dynamically by JS -->
+
+                            <!-- 3. Clipart Tab -->
+                            <div class="pod-tab-pane" id="tab-clipart">
+                                <div class="pod-pane-header">
+                                    <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Clipart Layers', 'pod-customizer'); ?></label>
+                                    <button type="button" class="pod-btn-add" id="pod-btn-add-clipart">
+                                        <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                        <span><?php esc_html_e('Add Clipart', 'pod-customizer'); ?></span>
+                                    </button>
+                                </div>
+                                <div class="pod-layer-list" id="pod-clipart-list">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
                             </div>
-                        </div>
-                    </div>
+
+                            <!-- 4. Photo Upload Tab -->
+                            <div class="pod-tab-pane" id="tab-upload">
+                                <div class="pod-pane-header">
+                                    <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Photo Layers', 'pod-customizer'); ?></label>
+                                    <button type="button" class="pod-btn-add" id="pod-btn-add-photo">
+                                        <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                        <span><?php esc_html_e('Add Photo', 'pod-customizer'); ?></span>
+                                    </button>
+                                </div>
+                                <div class="pod-layer-list" id="pod-photo-list">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
+                            </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

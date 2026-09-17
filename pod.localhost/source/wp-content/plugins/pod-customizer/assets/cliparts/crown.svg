@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="120" height="100">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+  </defs>
+  <!-- Crown Base & Spikes -->
+  <path d="M15,80 L25,30 L50,55 L60,18 L70,55 L95,30 L105,80 Z" fill="url(#goldGrad)" stroke="#a16207" stroke-width="3" stroke-linejoin="round" />
+  <!-- Bottom Band -->
+  <rect x="15" y="78" width="90" height="14" rx="4" fill="#a16207" />
+  <circle cx="35" cy="85" r="3" fill="#fef08a" />
+  <circle cx="60" cy="85" r="4" fill="#ef4444" />
+  <circle cx="85" cy="85" r="3" fill="#fef08a" />
+  <!-- Jewels on Spikes -->
+  <circle cx="25" cy="28" r="5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5" />
+  <circle cx="60" cy="16" r="6" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" />
+  <circle cx="95" cy="28" r="5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5" />
+</svg>
