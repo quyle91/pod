@@ -65,8 +65,11 @@
         "x": 1200,
         "y": 1100,
         "max_width_px": 520,
+        "max_height_px": 160,
+        "cols": 6,
         "gap_px": 12,
-        "distribution": "horizontal_center"
+        "gap_y_px": 14,
+        "distribution": "grid"
       }
     },
     {

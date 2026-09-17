@@ -264,24 +264,29 @@ function renderPresetImageSlot(field, value, scale) {
 }
 
 /**
- * 3. Dynamic Repeater Counter Slot (e.g. Birthday Candles)
- * Renders exactly `count` independent fabric.Image instances centered horizontally.
+ * 3. Dynamic Repeater Counter Slot (e.g. Birthday Candles, Family Icons, Badges)
+ * Supports:
+ * - "horizontal_center": 1-row centered layout with dynamic gap & shrink
+ * - "grid" or "rectangle": Multi-row rectangular grid with auto-wrapping, row-balancing & bounds packing
  */
 function renderRepeaterSlot(field, value, scale) {
   const min = field.min !== undefined ? field.min : 1;
-  const max = field.max !== undefined ? field.max : 20;
+  const max = field.max !== undefined ? field.max : 50;
   let count = parseInt(value !== undefined ? value : (field.default_value || min), 10);
   if (isNaN(count)) count = min;
   count = Math.max(min, Math.min(max, count));
 
   const container = field.container_bounds || {};
+  const isGrid = container.distribution === 'grid' || container.distribution === 'rectangle' || !!container.cols;
   const centerX = (container.x || 1200) * scale;
-  const centerY = (container.y || 400) * scale;
-  const maxContainerW = (container.max_width_px || 700) * scale;
+  const centerY = (container.y || 1100) * scale;
+  const maxContainerW = (container.max_width_px || container.width_px || 700) * scale;
+  const maxContainerH = (container.max_height_px || container.height_px || 400) * scale;
   const subImg = field.sub_image || {};
   let itemW = (subImg.width_px || 32) * scale;
   let itemH = (subImg.height_px || 64) * scale;
-  let baseGap = (container.gap_px || 12) * scale;
+  let gapX = (container.gap_x_px || container.gap_px || 12) * scale;
+  let gapY = (container.gap_y_px || container.gap_px || 12) * scale;
 
   const url = subImg.url;
   if (!url) return;
@@ -297,48 +302,111 @@ function renderRepeaterSlot(field, value, scale) {
       state.templateObjects[field.id] = [];
     }
 
-    // 2. Calculate dynamic responsive spacing & scaling
-    let gap = baseGap;
-    let totalW = count * itemW + (count - 1) * gap;
-
-    if (totalW > maxContainerW && count > 1) {
-      gap = (maxContainerW - count * itemW) / (count - 1);
-      if (gap < 2) {
-        const shrinkFactor = maxContainerW / (count * itemW + (count - 1) * 2);
-        itemW *= shrinkFactor;
-        itemH *= shrinkFactor;
-        gap = 2;
-        totalW = count * itemW + (count - 1) * gap;
-      } else {
-        totalW = count * itemW + (count - 1) * gap;
-      }
-    }
-
-    const startX = centerX - totalW / 2 + itemW / 2;
     const createdObjs = [];
 
-    // 3. Create independent fabric.Image for each item (no shared group mutation)
-    for (let i = 0; i < count; i++) {
-      const posX = startX + i * (itemW + gap);
-      const itemObj = new fabric.Image(imgElement, {
-        left: posX,
-        top: centerY,
-        originX: 'center',
-        originY: 'middle',
-        selectable: false,
-        evented: false,
-        podType: 'clipart',
-        clipartName: `Repeater Item ${i + 1}`,
-        clipartUrl: url,
-        podFieldId: field.id,
-      });
-      itemObj.scaleToWidth(itemW);
-      if (itemObj.getScaledHeight() > itemH) {
-        itemObj.scaleToHeight(itemH);
+    if (isGrid) {
+      // MULTI-ROW GRID / RECTANGLE DISTRIBUTION
+      const maxCols = container.cols || container.max_per_row || 6;
+      const numRows = Math.ceil(count / maxCols);
+      // Auto-balance columns across rows (e.g. 7 items with maxCols 6 -> 4 on row 0, 3 on row 1)
+      const effectiveCols = Math.ceil(count / numRows);
+
+      // Auto-scale if height or width exceeds rectangle bounds
+      let totalGridH = numRows * itemH + (numRows - 1) * gapY;
+      let maxRowItems = Math.min(effectiveCols, count);
+      let totalGridW = maxRowItems * itemW + (maxRowItems - 1) * gapX;
+
+      let scaleFactor = 1;
+      if (totalGridW > maxContainerW) {
+        scaleFactor = Math.min(scaleFactor, maxContainerW / totalGridW);
       }
-      state.canvas.add(itemObj);
-      state.canvas.bringToFront(itemObj);
-      createdObjs.push(itemObj);
+      if (totalGridH > maxContainerH) {
+        scaleFactor = Math.min(scaleFactor, maxContainerH / totalGridH);
+      }
+
+      if (scaleFactor < 1) {
+        itemW *= scaleFactor;
+        itemH *= scaleFactor;
+        gapX *= scaleFactor;
+        gapY *= scaleFactor;
+        totalGridH = numRows * itemH + (numRows - 1) * gapY;
+      }
+
+      const gridStartY = centerY - totalGridH / 2 + itemH / 2;
+      let itemIdx = 0;
+
+      for (let r = 0; r < numRows; r++) {
+        const itemsInThisRow = Math.min(effectiveCols, count - itemIdx);
+        const rowW = itemsInThisRow * itemW + (itemsInThisRow - 1) * gapX;
+        const rowStartX = centerX - rowW / 2 + itemW / 2;
+        const rowY = gridStartY + r * (itemH + gapY);
+
+        for (let c = 0; c < itemsInThisRow; c++) {
+          const posX = rowStartX + c * (itemW + gapX);
+          const itemObj = new fabric.Image(imgElement, {
+            left: posX,
+            top: rowY,
+            originX: 'center',
+            originY: 'middle',
+            selectable: false,
+            evented: false,
+            podType: 'clipart',
+            clipartName: `Repeater Item ${itemIdx + 1}`,
+            clipartUrl: url,
+            podFieldId: field.id,
+          });
+          itemObj.scaleToWidth(itemW);
+          if (itemObj.getScaledHeight() > itemH) {
+            itemObj.scaleToHeight(itemH);
+          }
+          state.canvas.add(itemObj);
+          state.canvas.bringToFront(itemObj);
+          createdObjs.push(itemObj);
+          itemIdx++;
+        }
+      }
+    } else {
+      // SINGLE-ROW HORIZONTAL CENTER DISTRIBUTION
+      let gap = gapX;
+      let totalW = count * itemW + (count - 1) * gap;
+
+      if (totalW > maxContainerW && count > 1) {
+        gap = (maxContainerW - count * itemW) / (count - 1);
+        if (gap < 2) {
+          const shrinkFactor = maxContainerW / (count * itemW + (count - 1) * 2);
+          itemW *= shrinkFactor;
+          itemH *= shrinkFactor;
+          gap = 2;
+          totalW = count * itemW + (count - 1) * gap;
+        } else {
+          totalW = count * itemW + (count - 1) * gap;
+        }
+      }
+
+      const startX = centerX - totalW / 2 + itemW / 2;
+
+      for (let i = 0; i < count; i++) {
+        const posX = startX + i * (itemW + gap);
+        const itemObj = new fabric.Image(imgElement, {
+          left: posX,
+          top: centerY,
+          originX: 'center',
+          originY: 'middle',
+          selectable: false,
+          evented: false,
+          podType: 'clipart',
+          clipartName: `Repeater Item ${i + 1}`,
+          clipartUrl: url,
+          podFieldId: field.id,
+        });
+        itemObj.scaleToWidth(itemW);
+        if (itemObj.getScaledHeight() > itemH) {
+          itemObj.scaleToHeight(itemH);
+        }
+        state.canvas.add(itemObj);
+        state.canvas.bringToFront(itemObj);
+        createdObjs.push(itemObj);
+      }
     }
 
     state.templateObjects[field.id] = createdObjs;
