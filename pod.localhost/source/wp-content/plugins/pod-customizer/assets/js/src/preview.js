@@ -67,8 +67,14 @@ export function openPreviewModal() {
     }
   }
 
-  // 3. Display modal
-  modal.style.display = 'flex';
+  // 3. Mount to document.body to break free from any theme stacking contexts or overflow:hidden
+  if (modal.parentNode !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  // 4. Display modal prominently
+  modal.style.setProperty('display', 'flex', 'important');
+  modal.style.setProperty('z-index', '9999999', 'important');
   modal.classList.add('is-open');
   document.body.style.overflow = 'hidden';
   console.log('[POD Customizer] 🚀 Preview modal displayed successfully!');
@@ -78,7 +84,7 @@ export function closePreviewModal() {
   console.log('[POD Customizer] 🔒 closePreviewModal() invoked.');
   const modal = document.getElementById('pod-preview-modal');
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.style.setProperty('display', 'none', 'important');
   modal.classList.remove('is-open');
   document.body.style.overflow = '';
 }

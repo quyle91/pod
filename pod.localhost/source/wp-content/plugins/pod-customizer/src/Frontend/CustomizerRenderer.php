@@ -289,6 +289,7 @@ class CustomizerRenderer implements HandlerInterface {
                             <input type="file" id="pod-file-input" accept="image/png, image/jpeg, image/webp" class="pod-file-hidden" multiple>
                         </div>
                     </div>
+                </div>
             </div>
 
             <!-- Modal Popup for Product Full Preview -->

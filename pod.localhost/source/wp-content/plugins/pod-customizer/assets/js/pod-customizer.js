@@ -1367,7 +1367,11 @@
         specs.style.display = "none";
       }
     }
-    modal.style.display = "flex";
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.setProperty("display", "flex", "important");
+    modal.style.setProperty("z-index", "9999999", "important");
     modal.classList.add("is-open");
     document.body.style.overflow = "hidden";
     console.log("[POD Customizer] \u{1F680} Preview modal displayed successfully!");
@@ -1376,7 +1380,7 @@
     console.log("[POD Customizer] \u{1F512} closePreviewModal() invoked.");
     const modal = document.getElementById("pod-preview-modal");
     if (!modal) return;
-    modal.style.display = "none";
+    modal.style.setProperty("display", "none", "important");
     modal.classList.remove("is-open");
     document.body.style.overflow = "";
   }
