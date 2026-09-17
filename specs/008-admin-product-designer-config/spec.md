@@ -9,6 +9,9 @@
 
 ## 1. Bối cảnh & Vấn đề thực tế (Problem Statement & Purpose)
 
+> [!IMPORTANT]
+> Toàn bộ danh mục trường hợp nghiệp vụ chi tiết (Auto-shrink text, Dynamic Repeater sub-images, Preset icon options, Pure 2D rectangular boundaries) và lý do chuyển dịch sang mô hình POC-First được tài liệu hóa tại [**`.specify/template_personalization_requirements.md`**](../../.specify/template_personalization_requirements.md).
+
 ### 1.1 Vấn đề hiện tại
 Hiện nay trong plugin `pod-customizer`, hệ thống đang sử dụng cấu hình mẫu dùng chung (hardcoded mockups và kích thước 1200x1200px mặc định). Tuy nhiên, trên một website POD (Print-On-Demand) thực tế:
 1. **Mỗi sản phẩm có kích thước & quy cách in riêng biệt**:

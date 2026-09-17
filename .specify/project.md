@@ -51,6 +51,7 @@ graph LR
 > [!NOTE]
 > - Chi tiết toàn bộ sơ đồ tuần tự (End-to-End Sequence Diagram) và quy trình làm việc của Admin trong Dashboard được đặc tả tại [**`.specify/workflows.md`**](./workflows.md).
 > - Chuẩn hóa các Thực thể (Entities), Hợp đồng dữ liệu (Data Contracts), và Cấu trúc lưu trữ Database (Tables & Meta keys) được đặc tả tại [**`.specify/entities_and_database.md`**](./entities_and_database.md).
+> - Đặc tả chi tiết các trường hợp nghiệp vụ Cá nhân hóa theo Mẫu (Auto-shrink text, Repeater, Preset Icon, 2D Bounding Box) được lưu tại [**`.specify/template_personalization_requirements.md`**](./template_personalization_requirements.md).
 
 ---
 
