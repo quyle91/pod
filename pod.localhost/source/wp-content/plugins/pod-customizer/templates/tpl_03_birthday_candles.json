@@ -27,9 +27,9 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 880,
-        "width_px": 180,
-        "height_px": 150
+        "y": 860,
+        "width_px": 240,
+        "height_px": 200
       },
       "options": [
         {
@@ -58,17 +58,17 @@
       "max": 18,
       "sub_image": {
         "url": "assets/cliparts/candle.svg",
-        "width_px": 46,
-        "height_px": 92
+        "width_px": 56,
+        "height_px": 112
       },
       "container_bounds": {
         "x": 1200,
         "y": 1040,
-        "max_width_px": 750,
-        "max_height_px": 220,
+        "max_width_px": 850,
+        "max_height_px": 260,
         "cols": 6,
-        "gap_px": 16,
-        "gap_y_px": 16,
+        "gap_px": 20,
+        "gap_y_px": 20,
         "distribution": "grid"
       }
     },
@@ -80,16 +80,16 @@
       "default_value": "Nam Anh",
       "position": {
         "x": 1200,
-        "y": 1220
+        "y": 1240
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 96,
-        "min_font_size_px": 30,
+        "font_size_px": 120,
+        "min_font_size_px": 38,
         "color": "#18181b",
         "align": "center",
-        "max_width_px": 950,
+        "max_width_px": 1050,
         "rotation": 0
       }
     },
@@ -101,16 +101,16 @@
       "default_value": "Happy Birthday!",
       "position": {
         "x": 1200,
-        "y": 1350
+        "y": 1380
       },
       "style": {
         "font_family": "Dancing Script",
         "font_weight": "600",
-        "font_size_px": 64,
-        "min_font_size_px": 24,
+        "font_size_px": 80,
+        "min_font_size_px": 30,
         "color": "#ec4899",
         "align": "center",
-        "max_width_px": 850,
+        "max_width_px": 950,
         "rotation": 0
       }
     }

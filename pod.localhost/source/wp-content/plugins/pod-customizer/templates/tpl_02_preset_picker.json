@@ -27,9 +27,9 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 940,
-        "width_px": 220,
-        "height_px": 180
+        "y": 920,
+        "width_px": 280,
+        "height_px": 230
       },
       "options": [
         {
@@ -67,16 +67,16 @@
       "default_value": "Jessica",
       "position": {
         "x": 1200,
-        "y": 1140
+        "y": 1160
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 105,
-        "min_font_size_px": 34,
+        "font_size_px": 130,
+        "min_font_size_px": 44,
         "color": "#18181b",
         "align": "center",
-        "max_width_px": 950,
+        "max_width_px": 1050,
         "rotation": 0
       }
     },
@@ -88,16 +88,16 @@
       "default_value": "BEST BOSS EVER",
       "position": {
         "x": 1200,
-        "y": 1270
+        "y": 1300
       },
       "style": {
         "font_family": "Oswald",
         "font_weight": "700",
-        "font_size_px": 62,
-        "min_font_size_px": 24,
+        "font_size_px": 75,
+        "min_font_size_px": 28,
         "color": "#e11d48",
         "align": "center",
-        "max_width_px": 850,
+        "max_width_px": 950,
         "rotation": 0
       }
     }

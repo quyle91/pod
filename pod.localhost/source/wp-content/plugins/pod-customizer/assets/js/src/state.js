@@ -7,6 +7,7 @@ export const fabric = window.fabric;
 
 // Patch Fabric.js 5.3.0 CanvasTextBaseline invalid enum 'alphabetical' -> 'alphabetic'
 if (fabric) {
+  if (fabric.Object) fabric.Object.prototype.textBaseline = 'alphabetic';
   if (fabric.Text) fabric.Text.prototype.textBaseline = 'alphabetic';
   if (fabric.IText) fabric.IText.prototype.textBaseline = 'alphabetic';
   if (fabric.Textbox) fabric.Textbox.prototype.textBaseline = 'alphabetic';
