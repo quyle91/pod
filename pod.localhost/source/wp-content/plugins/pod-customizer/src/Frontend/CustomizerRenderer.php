@@ -111,9 +111,6 @@ class CustomizerRenderer implements HandlerInterface {
                         </div>
                     </div>
                     <div class="pod-stage-actions">
-                        <button type="button" class="pod-btn-preview" id="pod-btn-preview" title="<?php esc_attr_e('Preview Full Product', 'pod-customizer'); ?>">
-                            🔍 <?php esc_html_e('Preview Product', 'pod-customizer'); ?>
-                        </button>
                         <span class="pod-canvas-hint">
                             <?php echo $is_template_mode ? esc_html__('Tip: Fill in the options on the right to customize your live preview', 'pod-customizer') : esc_html__('Tip: Click on elements on canvas to drag or resize', 'pod-customizer'); ?>
                         </span>
