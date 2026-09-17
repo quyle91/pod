@@ -1,0 +1,204 @@
+// ==========================================
+// POD Customizer: Modals & Dialog Windows
+// ==========================================
+
+/* Modal Popup Dialog */
+.pod-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.pod-modal-dialog {
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid var(--pod-border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.pod-clipart-modal-dialog {
+  max-width: 500px;
+}
+
+.pod-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--pod-border);
+}
+
+.pod-modal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pod-text-main);
+}
+
+.pod-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--pod-text-muted);
+  padding: 4px;
+
+  &:hover {
+    color: var(--pod-text-main);
+  }
+}
+
+.pod-modal-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pod-modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--pod-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+.pod-btn-modal-done {
+  padding: 8px 20px;
+  background: var(--pod-primary);
+  color: #ffffff;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    background: var(--pod-primary-hover);
+  }
+}
+
+/* Clipart Grid (Inside Modal) */
+.pod-clipart-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.pod-clipart-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 2px solid var(--pod-border);
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    border-color: var(--pod-primary);
+    background: #eef2ff;
+  }
+
+  .pod-clipart-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+  }
+
+  .pod-clipart-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--pod-text-muted);
+  }
+}
+
+/* Photo Upload (Inside Modal) */
+.pod-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  cursor: pointer;
+  transition: var(--pod-transition);
+  text-align: center;
+
+  &:hover {
+    border-color: var(--pod-primary);
+    background: #f0f7ff;
+  }
+
+  .pod-upload-icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--pod-text-main);
+  }
+
+  .pod-upload-meta {
+    font-size: 0.72rem;
+    color: var(--pod-text-muted);
+    margin-top: 4px;
+  }
+}
+
+.pod-file-hidden {
+  display: none;
+}
+
+.pod-upload-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.pod-upload-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #065f46;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.pod-btn-remove {
+  padding: 3px 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}

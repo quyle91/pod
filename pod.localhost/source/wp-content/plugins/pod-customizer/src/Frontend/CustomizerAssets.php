@@ -50,6 +50,19 @@ class CustomizerAssets implements HandlerInterface {
             POD_CUSTOMIZER_VERSION
         );
 
+        // 2.1 Dynamic Theme Styling & User Custom CSS
+        $primary_color = sanitize_hex_color(get_option('pod_primary_color', '#4f46e5'));
+        if (empty($primary_color)) {
+            $primary_color = '#4f46e5';
+        }
+        $custom_css = get_option('pod_custom_css', '');
+
+        $inline_css = ":root {\n  --pod-primary: {$primary_color};\n  --pod-primary-hover: {$primary_color};\n}\n";
+        if (!empty($custom_css)) {
+            $inline_css .= "\n/* Custom CSS (Admin Settings) */\n" . wp_strip_all_tags($custom_css) . "\n";
+        }
+        wp_add_inline_style('pod-customizer-css', $inline_css);
+
         // 3. Canvas Engine (Fabric.js)
         wp_enqueue_script(
             'pod-fabric-js',
@@ -133,14 +146,46 @@ class CustomizerAssets implements HandlerInterface {
                 'Dancing Script',
             ],
             'i18n'       => [
-                'defaultText'     => __('Your Custom Text', 'pod-customizer'),
-                'emptyTextAlert'  => __('Please enter custom text for your design.', 'pod-customizer'),
-                'renderingState'  => __('Packaging design...', 'pod-customizer'),
-                'photoUploaded'   => __('Photo loaded successfully', 'pod-customizer'),
-                'invalidPhoto'    => __('Please select a valid image file (JPG, PNG, WebP).', 'pod-customizer'),
+                'btnEdit'            => __('Edit', 'pod-customizer'),
+                'btnDelete'          => __('Delete', 'pod-customizer'),
+                'btnChange'          => __('Change', 'pod-customizer'),
+                'btnAddText'         => __('Add Text', 'pod-customizer'),
+                'btnAddClipart'      => __('Add Clipart', 'pod-customizer'),
+                'btnAddPhoto'        => __('Add Photo', 'pod-customizer'),
+                'btnReset'           => __('Reset', 'pod-customizer'),
+                'btnDone'            => __('Done', 'pod-customizer'),
+                'titleEditText'      => __('Edit text', 'pod-customizer'),
+                'titleDeleteText'    => __('Delete text', 'pod-customizer'),
+                'titleChangeClipart' => __('Change clipart', 'pod-customizer'),
+                'titleDeleteClipart' => __('Delete clipart', 'pod-customizer'),
+                'titleChangePhoto'   => __('Change photo', 'pod-customizer'),
+                'titleDeletePhoto'   => __('Delete photo', 'pod-customizer'),
+                'modalEditText'      => __('Edit Text', 'pod-customizer'),
+                'modalChooseClipart' => __('Choose Clipart Graphic', 'pod-customizer'),
+                'modalChangeClipart' => __('Change Clipart Graphic', 'pod-customizer'),
+                'modalUploadPhoto'   => __('Upload Personal Photo', 'pod-customizer'),
+                'modalChangePhoto'   => __('Change Uploaded Photo', 'pod-customizer'),
+                'emptyTextList'      => __('No custom text lines added yet. Click "Add Text" to create one.', 'pod-customizer'),
+                'emptyClipartList'   => __('No clipart graphics on canvas. Click "Add Clipart" to select one.', 'pod-customizer'),
+                'emptyPhotoList'     => __('No uploaded photos on canvas. Click "Add Photo" to upload.', 'pod-customizer'),
+                'emptyDesignAlert'   => __('Please add at least one customization (text, clipart, or photo) to your design.', 'pod-customizer'),
+                'emptyTextAlert'     => __('Please enter custom text for your design.', 'pod-customizer'),
+                'saveStateFailed'    => __('Could not save custom design state. Please try again.', 'pod-customizer'),
+                'invalidPhoto'       => __('Please select a valid image file (JPG, PNG, WebP).', 'pod-customizer'),
+                'defaultText'        => __('Your Custom Text', 'pod-customizer'),
+                'uploadedPhoto'      => __('Uploaded Photo', 'pod-customizer'),
+                'packagingDesign'    => __('Packaging design...', 'pod-customizer'),
+                'photoUploaded'      => __('Photo loaded successfully', 'pod-customizer'),
             ],
         ];
 
+        // Standard WordPress script localization
         wp_localize_script('pod-customizer-js', 'podCustomizerConfig', $config);
+        wp_localize_script('pod-customizer-js', 'podCustomizerI18n', $config['i18n']);
+
+        // Modern WordPress script translations support
+        if (function_exists('wp_set_script_translations')) {
+            wp_set_script_translations('pod-customizer-js', 'pod-customizer', POD_CUSTOMIZER_PATH . 'languages');
+        }
     }
 }

@@ -1,0 +1,31 @@
+// ==========================================
+// POD Customizer: Responsive Breakpoints
+// ==========================================
+
+@media (max-width: 768px) {
+  .pod-customizer-app {
+    padding: 12px;
+  }
+
+  .pod-tabs-nav {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pod-grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .pod-clipart-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pod-modal-dialog {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pod-clipart-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

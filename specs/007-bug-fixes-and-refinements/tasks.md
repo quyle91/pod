@@ -80,8 +80,45 @@ This checklist tracks actionable fixes for all reported bugs and architectural r
 
 ---
 
+### BUG-008: Presigned Secure Download Links & Work Order Data Integrity
+- [x] **TASK-040**: Fix Recipient Name and Shipping Address whitespace evaluation by wrapping candidate methods in `trim()`.
+- [x] **TASK-041**: Add `woocommerce_order_status_on-hold` hook in `OrderWebhookDispatcher` so COD and Bank Transfer orders auto-render print files upon order placement.
+- [x] **TASK-042**: Add safety auto-check in `OrderHandler::handle_ajax_send_printer_email()`: auto-dispatches render and alerts merchant if files are not yet generated.
+- [x] **TASK-043**: Implement HMAC-SHA256 Presigned Download Link generator and validator in `PrintStorageManager`.
+- [x] **TASK-044**: Register `/wp-json/pod-customizer/v1/download-production` endpoint in `CallbackController` with tamper detection and 7-day expiration checks.
+- [x] **TASK-045**: Log download audit trail into WooCommerce Order Notes (recording IP, timestamp, and file type).
+- [x] **TASK-046**: Verify signed link download (`200 OK`), tampered signature rejection (`403 Forbidden`), and expired link rejection (`410 Gone`).
+
+---
+
+### BUG-009: 300 DPI Layout Alignment & Comprehensive Factory Production Specs Manifest
+- [x] **TASK-047**: Export text dimensions (`width`, `height`) in `pod-customizer.js` during canvas state serialization.
+- [x] **TASK-048**: Forward `recipient_name`, `product_name`, and `preview_url` from `OrderWebhookDispatcher.php` to render backend.
+- [x] **TASK-049**: Implement center-origin to top-left coordinate transformation `(centerX - w/2, centerY - h/2)` for image/clipart layers in `sharpRenderer.js`, taking rotation bounding boxes into account.
+- [x] **TASK-050**: Implement full-canvas SVG text rendering in `sharpRenderer.js` with `text-anchor`, `dominant-baseline="central"`, `rotate(deg, cx, cy)`, and multi-line line splitting.
+- [x] **TASK-051**: Build comprehensive `04_production_specs.txt` generator with layer specifications, exact typography/color metrics, asset references, and dynamic reflection for future custom fields.
+- [x] **TASK-052**: Support base64 data URLs and remote HTTP preview URLs for `02_mockup_preview.jpg` bundling in factory ZIP packages.
+- [x] **TASK-053**: Re-render Order #281 Item #13, verify pixel bounds, text centering, cat positioning, and all 4 ZIP bundle contents.
+
+---
+
+### BUG-010: Responsive 2-Column Workspace Layout (Un-hardcode 360px)
+- [x] **TASK-054**: Replace `grid-template-columns: 360px 1fr` with `repeat(2, minmax(0, 1fr))` in `pod-customizer.css`.
+- [x] **TASK-055**: Remove `@media (max-width: 860px)` breakpoint to maintain persistent 2-column layout regardless of viewport width.
+
+### BUG-011: Storefront Customizer Flat Minimalist Styling & Single-Column Stack Layout
+- [x] **TASK-056**: Convert `.pod-workspace` to single-column layout (`grid-template-columns: 1fr; gap: 20px`).
+- [x] **TASK-057**: Update `.pod-customizer-app` padding to 20px, remove box-shadow, and remove border-radius.
+- [x] **TASK-058**: Remove border-radius and box-shadow on `.pod-canvas-wrapper`, `.pod-tabs-nav`, `.pod-tab-btn`, and `.pod-tabs-content` for a clean flat aesthetic with subtle `#e2e8f0` borders.
+- [x] **TASK-059**: Enforce absolute zero border-radius (`border-radius: 0 !important;`) across all components (inputs, selects, buttons, swatches, badges, dropzones, mockup/clipart cards, cart thumbnails).
+
+---
+
 ## 2. Active & Upcoming Tasks (Checklist Extension)
 
 *New bug reports and enhancement tasks will be appended here as testing continues.*
 
-- [ ] **TASK-040**: *(Awaiting next user report or edge case)*
+- [ ] **TASK-060**: *(Awaiting next user report or edge case)*
+
+
+

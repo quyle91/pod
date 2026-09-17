@@ -12,12 +12,18 @@ use PodCustomizer\Contracts\HandlerInterface;
 class PrintStorageManager implements HandlerInterface {
 
     public const UPLOAD_SUBDIR = 'pod-prints';
+    public const CRON_HOOK = 'pod_daily_print_cleanup';
+    public const RETENTION_DAYS = 30;
 
     /**
      * {@inheritdoc}
      */
     public function register_hooks(): void {
-        // Register any storage or retention maintenance hooks if needed
+        add_action(self::CRON_HOOK, [__CLASS__, 'cleanup_expired_prints']);
+
+        if (!wp_next_scheduled(self::CRON_HOOK)) {
+            wp_schedule_event(time() + DAY_IN_SECONDS, 'daily', self::CRON_HOOK);
+        }
     }
 
     /**
@@ -53,12 +59,20 @@ class PrintStorageManager implements HandlerInterface {
 
         // Determine destination file extension and filename
         $parsed_path = wp_parse_url($remote_url, PHP_URL_PATH);
-        $extension = pathinfo($parsed_path, PATHINFO_EXTENSION);
-        if (empty($extension)) {
-            $extension = ($file_type === 'zip') ? 'zip' : 'png';
+        $remote_filename = basename($parsed_path);
+
+        if ($file_type === 'zip') {
+            if (!empty($remote_filename) && str_ends_with($remote_filename, '.zip')) {
+                $filename = $remote_filename;
+            } else {
+                $domain_slug = str_replace('.', '_', wp_parse_url(home_url(), PHP_URL_HOST) ?: 'pod_localhost');
+                $filename = sprintf('%s_order_%d_item_%d.zip', $domain_slug, $order_id, $item_id);
+            }
+        } else {
+            $extension = pathinfo($parsed_path, PATHINFO_EXTENSION) ?: 'png';
+            $filename = sprintf('order_%d_item_%d_300dpi.%s', $order_id, $item_id, $extension);
         }
 
-        $filename = sprintf('order_%d_item_%d_%s.%s', $order_id, $item_id, ($file_type === 'zip' ? 'production' : '300dpi'), $extension);
         $target_filepath = trailingslashit($target_dir) . $filename;
         $final_file_url  = trailingslashit($target_url) . $filename;
 
@@ -124,5 +138,89 @@ class PrintStorageManager implements HandlerInterface {
             'total_files'   => $total_files,
             'total_size_mb' => round($total_bytes / (1024 * 1024), 2),
         ];
+    }
+
+    /**
+     * Clean up production files older than X days.
+     *
+     * @param int $days Number of retention days. 0 = clean all files.
+     * @return int Number of files deleted.
+     */
+    public static function cleanup_expired_prints(int $days = self::RETENTION_DAYS): int {
+        $upload_info = wp_upload_dir();
+        $target_dir = trailingslashit($upload_info['basedir']) . self::UPLOAD_SUBDIR;
+
+        if (!is_dir($target_dir)) {
+            return 0;
+        }
+
+        $now = time();
+        $cutoff_time = $days > 0 ? ($now - ($days * DAY_IN_SECONDS)) : $now + 1;
+        $deleted_count = 0;
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($target_dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isFile()) {
+                if ($item->getMTime() <= $cutoff_time) {
+                    @unlink($item->getPathname());
+                    $deleted_count++;
+                }
+            } elseif ($item->isDir()) {
+                // Delete empty directories
+                @rmdir($item->getPathname());
+            }
+        }
+
+        return $deleted_count;
+    }
+
+    /**
+     * Generate a tamper-proof, time-limited signed URL for factory downloads.
+     *
+     * @param int $order_id
+     * @param int $item_id
+     * @param string $file_type 'zip' or 'print'
+     * @param int $expires_in_seconds Default 7 days (604800s)
+     * @return string Signed REST download URL
+     */
+    public static function generate_signed_download_url(int $order_id, int $item_id, string $file_type = 'zip', int $expires_in_seconds = 604800): string {
+        $expires = time() + $expires_in_seconds;
+        $salt = wp_salt('auth') . get_option('pod_shared_secret', 'pod_secret_token_123456');
+        $payload = sprintf('order:%d:item:%d:type:%s:expires:%d', $order_id, $item_id, $file_type, $expires);
+        $sig = hash_hmac('sha256', $payload, $salt);
+
+        return add_query_arg([
+            'order_id' => $order_id,
+            'item_id'  => $item_id,
+            'type'     => $file_type,
+            'expires'  => $expires,
+            'sig'      => $sig,
+        ], rest_url('pod-customizer/v1/download-production'));
+    }
+
+    /**
+     * Verify the HMAC cryptographic signature of a download request.
+     *
+     * @param int $order_id
+     * @param int $item_id
+     * @param string $file_type
+     * @param int $expires
+     * @param string $signature
+     * @return bool True if valid and not expired
+     */
+    public static function verify_download_signature(int $order_id, int $item_id, string $file_type, int $expires, string $signature): bool {
+        if ($expires < time()) {
+            return false;
+        }
+
+        $salt = wp_salt('auth') . get_option('pod_shared_secret', 'pod_secret_token_123456');
+        $payload = sprintf('order:%d:item:%d:type:%s:expires:%d', $order_id, $item_id, $file_type, $expires);
+        $expected_sig = hash_hmac('sha256', $payload, $salt);
+
+        return hash_equals($expected_sig, $signature);
     }
 }

@@ -102,64 +102,127 @@ class CustomizerRenderer implements HandlerInterface {
 
                         <!-- 2. Text Tab -->
                         <div class="pod-tab-pane" id="tab-text">
-                            <div class="pod-form-group">
-                                <label for="pod-input-text" class="pod-control-label"><?php esc_html_e('Custom Text Message', 'pod-customizer'); ?></label>
-                                <input type="text" id="pod-input-text" class="pod-input" placeholder="<?php esc_attr_e('Enter your personalized text...', 'pod-customizer'); ?>" value="Best Dad Ever">
+                            <div class="pod-pane-header">
+                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Custom Text Lines', 'pod-customizer'); ?></label>
+                                <button type="button" class="pod-btn-add" id="pod-btn-add-text">
+                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                    <span><?php esc_html_e('Add Text', 'pod-customizer'); ?></span>
+                                </button>
                             </div>
-
-                            <div class="pod-grid-2col">
-                                <div class="pod-form-group">
-                                    <label for="pod-select-font" class="pod-control-label"><?php esc_html_e('Font Style', 'pod-customizer'); ?></label>
-                                    <select id="pod-select-font" class="pod-select">
-                                        <option value="Roboto">Roboto</option>
-                                        <option value="Montserrat">Montserrat</option>
-                                        <option value="Pacifico">Pacifico</option>
-                                        <option value="Oswald">Oswald</option>
-                                        <option value="Dancing Script">Dancing Script</option>
-                                    </select>
-                                </div>
-                                <div class="pod-form-group">
-                                    <label class="pod-control-label"><?php esc_html_e('Text Size', 'pod-customizer'); ?> <span id="pod-size-val">44px</span></label>
-                                    <input type="range" id="pod-range-size" min="20" max="90" value="44" class="pod-range">
-                                </div>
-                            </div>
-
-                            <div class="pod-form-group">
-                                <label class="pod-control-label"><?php esc_html_e('Text Color', 'pod-customizer'); ?></label>
-                                <div class="pod-color-presets" id="pod-text-colors">
-                                    <button type="button" class="pod-color-btn active" data-color="#111827" style="background:#111827;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#ef4444" style="background:#ef4444;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#3b82f6" style="background:#3b82f6;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#10b981" style="background:#10b981;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#f59e0b" style="background:#f59e0b;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#8b5cf6" style="background:#8b5cf6;"></button>
-                                    <button type="button" class="pod-color-btn" data-color="#ffffff" style="background:#ffffff; border:1px solid #d1d5db;"></button>
-                                    <input type="color" id="pod-custom-color" value="#111827" class="pod-color-picker" title="<?php esc_attr_e('Custom Color Picker', 'pod-customizer'); ?>">
-                                </div>
+                            <div class="pod-layer-list" id="pod-text-list">
+                                <!-- Populated dynamically by JS -->
                             </div>
                         </div>
 
                         <!-- 3. Clipart Tab -->
                         <div class="pod-tab-pane" id="tab-clipart">
-                            <label class="pod-control-label"><?php esc_html_e('Choose Clipart Graphic', 'pod-customizer'); ?></label>
-                            <div class="pod-clipart-grid" id="pod-clipart-grid">
+                            <div class="pod-pane-header">
+                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Clipart Layers', 'pod-customizer'); ?></label>
+                                <button type="button" class="pod-btn-add" id="pod-btn-add-clipart">
+                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                    <span><?php esc_html_e('Add Clipart', 'pod-customizer'); ?></span>
+                                </button>
+                            </div>
+                            <div class="pod-layer-list" id="pod-clipart-list">
                                 <!-- Populated dynamically by JS -->
                             </div>
                         </div>
 
                         <!-- 4. Photo Upload Tab -->
                         <div class="pod-tab-pane" id="tab-upload">
-                            <label class="pod-control-label"><?php esc_html_e('Upload Personal Photo', 'pod-customizer'); ?></label>
-                            <div class="pod-upload-dropzone" id="pod-upload-dropzone">
-                                <span class="pod-upload-icon">📂</span>
-                                <p><?php esc_html_e('Click or drag & drop photo here', 'pod-customizer'); ?></p>
-                                <span class="pod-upload-meta"><?php esc_html_e('Supports PNG, JPG, WebP (Max 10MB)', 'pod-customizer'); ?></span>
-                                <input type="file" id="pod-file-input" accept="image/png, image/jpeg, image/webp" class="pod-file-hidden">
+                            <div class="pod-pane-header">
+                                <label class="pod-control-label" style="margin-bottom: 0;"><?php esc_html_e('Photo Layers', 'pod-customizer'); ?></label>
+                                <button type="button" class="pod-btn-add" id="pod-btn-add-photo">
+                                    <svg class="pod-icon-plus" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>
+                                    <span><?php esc_html_e('Add Photo', 'pod-customizer'); ?></span>
+                                </button>
                             </div>
-                            <div class="pod-upload-preview" id="pod-upload-preview" style="display:none;">
-                                <span class="pod-upload-name" id="pod-upload-name"></span>
-                                <button type="button" class="pod-btn-remove" id="pod-btn-remove-photo">✕ <?php esc_html_e('Remove', 'pod-customizer'); ?></button>
+                            <div class="pod-layer-list" id="pod-photo-list">
+                                <!-- Populated dynamically by JS -->
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Popup for Text Editing -->
+            <div class="pod-modal-backdrop" id="pod-text-modal" style="display:none;">
+                <div class="pod-modal-dialog">
+                    <div class="pod-modal-header">
+                        <h4 class="pod-modal-title" id="pod-modal-title"><?php esc_html_e('Edit Text', 'pod-customizer'); ?></h4>
+                        <button type="button" class="pod-modal-close" id="pod-modal-btn-close">✕</button>
+                    </div>
+                    <div class="pod-modal-body">
+                        <div class="pod-form-group">
+                            <label for="pod-modal-input-text" class="pod-control-label"><?php esc_html_e('Text Content', 'pod-customizer'); ?></label>
+                            <input type="text" id="pod-modal-input-text" class="pod-input" placeholder="<?php esc_attr_e('Enter your text...', 'pod-customizer'); ?>">
+                        </div>
+
+                        <div class="pod-grid-2col">
+                            <div class="pod-form-group">
+                                <label for="pod-modal-select-font" class="pod-control-label"><?php esc_html_e('Font Style', 'pod-customizer'); ?></label>
+                                <select id="pod-modal-select-font" class="pod-select">
+                                    <option value="Roboto">Roboto</option>
+                                    <option value="Montserrat">Montserrat</option>
+                                    <option value="Pacifico">Pacifico</option>
+                                    <option value="Oswald">Oswald</option>
+                                    <option value="Dancing Script">Dancing Script</option>
+                                </select>
+                            </div>
+                            <div class="pod-form-group">
+                                <label class="pod-control-label"><?php esc_html_e('Text Size', 'pod-customizer'); ?> <span id="pod-modal-size-val">44px</span></label>
+                                <input type="range" id="pod-modal-range-size" min="18" max="100" value="44" class="pod-range">
+                            </div>
+                        </div>
+
+                        <div class="pod-form-group">
+                            <label class="pod-control-label"><?php esc_html_e('Text Color', 'pod-customizer'); ?></label>
+                            <div class="pod-color-presets" id="pod-modal-text-colors">
+                                <button type="button" class="pod-color-btn" data-color="#111827" style="background:#111827;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#ef4444" style="background:#ef4444;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#3b82f6" style="background:#3b82f6;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#10b981" style="background:#10b981;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#f59e0b" style="background:#f59e0b;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#8b5cf6" style="background:#8b5cf6;"></button>
+                                <button type="button" class="pod-color-btn" data-color="#ffffff" style="background:#ffffff; border:1px solid #d1d5db;"></button>
+                                <input type="color" id="pod-modal-custom-color" value="#111827" class="pod-color-picker" title="<?php esc_attr_e('Custom Color Picker', 'pod-customizer'); ?>">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pod-modal-footer">
+                        <button type="button" class="pod-btn-modal-done" id="pod-modal-btn-done"><?php esc_html_e('Done', 'pod-customizer'); ?></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Popup for Clipart Selection -->
+            <div class="pod-modal-backdrop" id="pod-clipart-modal" style="display:none;">
+                <div class="pod-modal-dialog pod-clipart-modal-dialog">
+                    <div class="pod-modal-header">
+                        <h4 class="pod-modal-title" id="pod-clipart-modal-title"><?php esc_html_e('Choose Clipart Graphic', 'pod-customizer'); ?></h4>
+                        <button type="button" class="pod-modal-close" id="pod-clipart-modal-btn-close">✕</button>
+                    </div>
+                    <div class="pod-modal-body">
+                        <div class="pod-clipart-grid" id="pod-clipart-grid">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Popup for Photo Upload -->
+            <div class="pod-modal-backdrop" id="pod-photo-modal" style="display:none;">
+                <div class="pod-modal-dialog">
+                    <div class="pod-modal-header">
+                        <h4 class="pod-modal-title" id="pod-photo-modal-title"><?php esc_html_e('Upload Personal Photo', 'pod-customizer'); ?></h4>
+                        <button type="button" class="pod-modal-close" id="pod-photo-modal-btn-close">✕</button>
+                    </div>
+                    <div class="pod-modal-body">
+                        <div class="pod-upload-dropzone" id="pod-upload-dropzone">
+                            <span class="pod-upload-icon">📂</span>
+                            <p><?php esc_html_e('Click or drag & drop photo here', 'pod-customizer'); ?></p>
+                            <span class="pod-upload-meta"><?php esc_html_e('Supports PNG, JPG, WebP (Max 10MB)', 'pod-customizer'); ?></span>
+                            <input type="file" id="pod-file-input" accept="image/png, image/jpeg, image/webp" class="pod-file-hidden" multiple>
                         </div>
                     </div>
                 </div>

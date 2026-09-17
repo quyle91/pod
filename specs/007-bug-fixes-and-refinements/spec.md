@@ -94,3 +94,36 @@ All fixes in this specification must strictly comply with the following architec
   - Update `CallbackController` to download production files, store local WordPress URLs in WooCommerce order item meta, and reply with `stored_locally: true`.
   - On the backend, delete temporary files once the client confirms successful local transfer.
 
+### BUG-008: Presigned Secure Download Links & Work Order Data Integrity
+- **Reported Issue**: Production file downloads in emails exposed direct static file URLs, lacking access control, tamper resistance, and expiration. Furthermore, recipient names were blank due to untrimmed single-space strings from WooCommerce, and `on-hold` orders did not auto-render.
+- **Requirement**:
+  - Implement presigned URLs with HMAC-SHA256 signatures (`/wp-json/pod-customizer/v1/download-production`) and 7-day TTL.
+  - Reject tampered signatures with `403 Forbidden` and expired links with `410 Gone`.
+  - Record download audit entries (IP, timestamp, item ID) directly into WooCommerce Order Notes.
+  - Apply `trim()` to recipient name and shipping address resolution.
+  - Listen to `woocommerce_order_status_on-hold` so COD/BACS orders render immediately.
+### BUG-009: 300 DPI Layout Alignment & Comprehensive Factory Production Specs Manifest
+- **Reported Issue**: 
+  1. The 300 DPI print file (`01_print_ready_300dpi.png`) had layout discrepancies compared to the canvas preview mockup (`02_mockup_preview.jpg`). Fabric.js center-origin coordinates were treated as top-left by Sharp, shifting layers down and right (clipping the clipart at the bottom edge), and text SVGs were clipped by a small hardcoded 800px viewport.
+  2. The production specs file inside the ZIP (`04_production_specs.txt`) lacked user customization information (no text, no font, no colors, no asset paths) and had no extensibility for future dynamic fields.
+  3. `02_mockup_preview.jpg` was omitted from factory packages because `preview_url` was not forwarded by `OrderWebhookDispatcher`.
+- **Requirement**:
+  - Transform center coordinates `(centerX, centerY)` to top-left `(centerX - w/2, centerY - h/2)` for image/clipart layers, taking rotation bounding boxes into account.
+  - Render SVG text at target canvas dimensions (`3000x3000px`) using `text-anchor="middle"` and `dominant-baseline="central"`, with multi-line splitting and font fallback.
+  - Generate a detailed, human-readable `04_production_specs.txt` manifest containing complete order metadata, layer-by-layer specifications (type, text, font, size, color, alignment, positions, rotation, raw asset paths), and dynamic key-value reflection for future custom fields.
+  - Forward `recipient_name`, `product_name`, and `preview_url` in `OrderWebhookDispatcher` so factory bundles include the preview mockup and order context.
+
+### BUG-010: Responsive 2-Column Workspace Layout (Un-hardcode 360px)
+- **Reported Issue**: `.pod-workspace` had a fixed hardcoded left column width (`grid-template-columns: 360px 1fr`) and collapsed to 1 column at 860px. When the container width is narrow or variable, the hardcoded 360px caused layout imbalance. The business requirement dictates maintaining a persistent 2-column layout (50/50 split) across all screen widths without arbitrary media query collapses.
+- **Requirement**:
+  - Replace `grid-template-columns: 360px 1fr` with `repeat(2, minmax(0, 1fr))` to guarantee equal-width, flexible columns.
+  - Remove the `@media (max-width: 860px)` single-column rule to keep the 2-column presentation consistent.
+
+### BUG-011: Storefront Customizer Flat Minimalist Styling & Single-Column Stack Layout
+- **Reported Issue**: Customizer widget featured rounded cards and heavy elevation box shadows that clashed with minimalist flat theme designs, and requested a single-column stacked layout (Canvas on top, control tabs below).
+- **Requirement**:
+  - Convert `.pod-workspace` to single-column layout (`grid-template-columns: 1fr; gap: 20px`).
+  - Set `.pod-customizer-app` padding to `20px`.
+  - Remove `box-shadow` and `border-radius` from the app container, canvas wrapper, tab navigation, and tab content panels.
+  - Maintain a clean, subtle border (`1px solid var(--pod-border)` / `#e2e8f0`).
+

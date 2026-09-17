@@ -1,0 +1,43 @@
+// ==========================================
+// POD Customizer: Design System Variables
+// ==========================================
+
+$pod-primary: #4f46e5;
+$pod-primary-hover: #4338ca;
+$pod-accent: #06b6d4;
+$pod-surface: #ffffff;
+$pod-bg-muted: #f8fafc;
+$pod-border: #e2e8f0;
+$pod-border-active: #6366f1;
+$pod-text-main: #0f172a;
+$pod-text-muted: #64748b;
+$pod-danger: #991b1b;
+$pod-danger-bg: #fee2e2;
+$pod-danger-border: #fca5a5;
+$pod-danger-hover: #fecaca;
+$pod-success: #059669;
+$pod-success-bg: #ecfdf5;
+$pod-success-border: #a7f3d0;
+$pod-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+$pod-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.12);
+$pod-shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.15);
+$pod-radius: 0;
+$pod-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+$pod-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+:root {
+  --pod-primary: #{$pod-primary};
+  --pod-primary-hover: #{$pod-primary-hover};
+  --pod-accent: #{$pod-accent};
+  --pod-surface: #{$pod-surface};
+  --pod-bg-muted: #{$pod-bg-muted};
+  --pod-border: #{$pod-border};
+  --pod-border-active: #{$pod-border-active};
+  --pod-text-main: #{$pod-text-main};
+  --pod-text-muted: #{$pod-text-muted};
+  --pod-shadow-sm: #{$pod-shadow-sm};
+  --pod-shadow-md: #{$pod-shadow-md};
+  --pod-shadow-lg: #{$pod-shadow-lg};
+  --pod-radius: #{$pod-radius};
+  --pod-transition: #{$pod-transition};
+}

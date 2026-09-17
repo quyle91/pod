@@ -1,0 +1,138 @@
+// ==========================================
+// POD Customizer: Navigation Tabs & Controls
+// ==========================================
+
+.pod-controls-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+/* Nav Tabs */
+.pod-tabs-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+}
+
+.pod-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pod-text-muted);
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    color: var(--pod-text-main);
+  }
+
+  &.active {
+    background: #ffffff;
+    color: var(--pod-primary);
+  }
+}
+
+/* Tab Panes */
+.pod-tabs-content {
+  background: #ffffff;
+  border: 1px solid var(--pod-border);
+  padding: 18px;
+  min-height: 260px;
+}
+
+.pod-tab-pane {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+
+  &.active {
+    display: flex;
+  }
+}
+
+/* Form Controls & Inputs */
+.pod-control-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pod-text-main);
+  margin-bottom: 6px;
+}
+
+.pod-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.pod-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pod-input,
+.pod-select {
+  width: 100%;
+  padding: 9px 12px;
+  background: #ffffff;
+  border: 1px solid var(--pod-border);
+  font-size: 0.88rem;
+  color: var(--pod-text-main);
+  transition: var(--pod-transition);
+  outline: none;
+
+  &:focus {
+    border-color: var(--pod-border-active);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  }
+}
+
+.pod-range {
+  width: 100%;
+  accent-color: var(--pod-primary);
+  cursor: pointer;
+}
+
+/* Color Presets */
+.pod-color-presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pod-color-btn {
+  width: 30px;
+  height: 30px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--pod-transition);
+  outline: none;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &.active {
+    border-color: var(--pod-primary);
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--pod-primary);
+  }
+}
+
+.pod-color-picker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}

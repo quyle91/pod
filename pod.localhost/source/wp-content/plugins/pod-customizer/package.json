@@ -1,0 +1,13 @@
+{
+  "name": "pod-customizer",
+  "version": "1.0.0",
+  "description": "POD Customizer Frontend Assets Build System",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5",
+    "sass": "^1.77.8"
+  }
+}

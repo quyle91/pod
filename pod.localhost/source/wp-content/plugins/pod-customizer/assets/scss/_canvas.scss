@@ -1,0 +1,97 @@
+// ==========================================
+// POD Customizer: Canvas Stage & Actions
+// ==========================================
+
+.pod-stage-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pod-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f1f5f9;
+  border: 1px solid var(--pod-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+  }
+}
+
+.pod-canvas-loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--pod-text-muted);
+  font-weight: 500;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.pod-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--pod-primary);
+  border-radius: 50%;
+  animation: podSpin 0.8s linear infinite;
+}
+
+@keyframes podSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pod-stage-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.pod-btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #ffffff;
+  border: 1px solid var(--pod-border);
+  color: var(--pod-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    background: #f8fafc;
+    color: var(--pod-text-main);
+    border-color: #cbd5e1;
+  }
+}
+
+.pod-canvas-hint {
+  color: var(--pod-text-muted);
+  font-style: italic;
+  font-size: 0.75rem;
+}

@@ -42,6 +42,9 @@ spl_autoload_register(function ($class) {
 
 // Bootstrap Plugin
 function pod_customizer_init() {
+    // Load plugin textdomain for i18n
+    load_plugin_textdomain('pod-customizer', false, dirname(plugin_basename(__FILE__)) . '/languages');
+
     // Ensure WooCommerce is active before initializing handlers
     if (!class_exists('WooCommerce')) {
         add_action('admin_notices', function () {

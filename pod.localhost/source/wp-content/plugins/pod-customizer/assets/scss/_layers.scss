@@ -1,0 +1,208 @@
+// ==========================================
+// POD Customizer: Layer Lists & Action Buttons
+// ==========================================
+
+@use 'variables' as *;
+
+/* Pane Header & Subheading */
+.pod-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pod-layer-subheading {
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+
+/* Add Button */
+.pod-btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--pod-primary);
+  color: #ffffff !important;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  .pod-icon-plus {
+    width: 12px;
+    height: 12px;
+    stroke: #ffffff !important;
+    fill: none;
+    flex-shrink: 0;
+  }
+
+  span {
+    color: #ffffff !important;
+  }
+
+  &:hover {
+    background: var(--pod-primary-hover);
+    color: #ffffff !important;
+
+    .pod-icon-plus {
+      stroke: #ffffff !important;
+    }
+  }
+}
+
+/* Dynamic Layer List */
+.pod-layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pod-layer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid var(--pod-border);
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+  }
+
+  &.active {
+    border-color: var(--pod-primary);
+    background: #eff6ff;
+  }
+
+  .pod-layer-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 130px);
+  }
+
+  .pod-layer-thumb {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    flex-shrink: 0;
+    padding: 2px;
+  }
+
+  .pod-layer-color-dot {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #cbd5e1;
+    flex-shrink: 0;
+  }
+
+  .pod-layer-texts {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pod-layer-title {
+    display: block;
+    width: 100%;
+    max-width: 24ch;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pod-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .pod-layer-subtitle {
+    display: block;
+    width: 100%;
+    max-width: 24ch;
+    font-size: 0.72rem;
+    color: var(--pod-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+
+  .pod-layer-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+}
+
+.pod-btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #ffffff;
+  border: 1px solid var(--pod-border);
+  color: var(--pod-text-main);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+}
+
+.pod-btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: $pod-danger-bg;
+  border: 1px solid $pod-danger-border;
+  color: $pod-danger;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--pod-transition);
+
+  &:hover {
+    background: $pod-danger-hover;
+    color: #7f1d1d;
+  }
+}
+
+.pod-empty-state {
+  padding: 16px;
+  text-align: center;
+  color: var(--pod-text-muted);
+  font-size: 0.8rem;
+  border: 1px dashed var(--pod-border);
+  background: #fafafa;
+}
+
+/* Badge in Cart */
+.pod-badge-customized {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #ddd6fe;
+}

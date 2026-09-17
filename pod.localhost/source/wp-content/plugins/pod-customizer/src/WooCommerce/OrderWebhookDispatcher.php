@@ -17,6 +17,7 @@ class OrderWebhookDispatcher implements HandlerInterface, DispatcherInterface {
     public function register_hooks(): void {
         add_action('woocommerce_order_status_processing', [$this, 'on_order_processing'], 10, 1);
         add_action('woocommerce_order_status_completed', [$this, 'on_order_processing'], 10, 1);
+        add_action('woocommerce_order_status_on-hold', [$this, 'on_order_processing'], 10, 1);
     }
 
     /**
@@ -97,12 +98,26 @@ class OrderWebhookDispatcher implements HandlerInterface, DispatcherInterface {
         $endpoint = $backend_url . '/api/v1/render';
         $callback_url = rest_url('pod-customizer/v1/render-callback');
 
+        $order = wc_get_order($order_id);
+        $item = $order ? $order->get_item($item_id) : null;
+        $product_name = $item ? $item->get_name() : '';
+        $recipient_name = $order ? trim($order->get_formatted_shipping_full_name() ?: $order->get_formatted_billing_full_name()) : '';
+        $preview_raw = $item ? $item->get_meta(OrderHandler::ORDER_ITEM_META_PREVIEW_URL) : '';
+        $preview_url = !empty($preview_raw) ? OrderHandler::resolve_file_url($preview_raw) : '';
+
+        $site_host = wp_parse_url(home_url(), PHP_URL_HOST) ?: 'pod.localhost';
+        $domain_slug = str_replace('.', '_', $site_host);
+
         $payload = [
-            'order_id'     => $order_id,
-            'item_id'      => $item_id,
-            'canvas'       => $canvas_state['canvas'] ?? ['width' => 600, 'height' => 600],
-            'layers'       => $canvas_state['layers'] ?? [],
-            'callback_url' => $callback_url,
+            'order_id'       => $order_id,
+            'item_id'        => $item_id,
+            'domain_name'    => $domain_slug,
+            'recipient_name' => $recipient_name,
+            'product_name'   => $product_name,
+            'preview_url'    => $preview_url,
+            'canvas'         => $canvas_state['canvas'] ?? ['width' => 600, 'height' => 600],
+            'layers'         => $canvas_state['layers'] ?? [],
+            'callback_url'   => $callback_url,
         ];
 
         // Allow filters on outgoing payload (Open/Closed Principle)

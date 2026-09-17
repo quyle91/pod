@@ -1,650 +1,933 @@
-/**
- * POD Customizer Frontend Orchestrator
- * Manages Fabric.js canvas, layer state, interactive controls,
- * and serializes strict JSON data contract for WooCommerce Add to Cart.
- */
-(function () {
-  'use strict';
+(() => {
+  // assets/js/src/state.js
+  var config = window.podCustomizerConfig || {};
+  var fabric = window.fabric;
+  var PREVIEW_SIZE = 600;
+  var RENDER_SIZE = config.canvas?.width || 1200;
+  var SCALE_RATIO = RENDER_SIZE / PREVIEW_SIZE;
+  var state = {
+    canvas: null,
+    mockupImg: null,
+    currentMockup: config.mockups?.[0] || null,
+    editingTextObj: null,
+    editingClipartObj: null,
+    editingPhotoObj: null
+  };
+  var elements = {
+    loading: document.getElementById("pod-canvas-loading"),
+    mockupsGrid: document.getElementById("pod-mockups-grid"),
+    clipartGrid: document.getElementById("pod-clipart-grid"),
+    btnAddText: document.getElementById("pod-btn-add-text"),
+    textList: document.getElementById("pod-text-list"),
+    btnAddClipart: document.getElementById("pod-btn-add-clipart"),
+    clipartList: document.getElementById("pod-clipart-list"),
+    btnAddPhoto: document.getElementById("pod-btn-add-photo"),
+    photoList: document.getElementById("pod-photo-list"),
+    // Text Modal
+    textModal: document.getElementById("pod-text-modal"),
+    textModalTitle: document.getElementById("pod-modal-title"),
+    textModalBtnClose: document.getElementById("pod-modal-btn-close"),
+    textModalBtnDone: document.getElementById("pod-modal-btn-done"),
+    modalInputText: document.getElementById("pod-modal-input-text"),
+    modalSelectFont: document.getElementById("pod-modal-select-font"),
+    modalRangeSize: document.getElementById("pod-modal-range-size"),
+    modalSizeVal: document.getElementById("pod-modal-size-val"),
+    modalCustomColor: document.getElementById("pod-modal-custom-color"),
+    modalColorsContainer: document.getElementById("pod-modal-text-colors"),
+    // Clipart Modal
+    clipartModal: document.getElementById("pod-clipart-modal"),
+    clipartModalTitle: document.getElementById("pod-clipart-modal-title"),
+    clipartModalBtnClose: document.getElementById("pod-clipart-modal-btn-close"),
+    // Photo Modal
+    photoModal: document.getElementById("pod-photo-modal"),
+    photoModalTitle: document.getElementById("pod-photo-modal-title"),
+    photoModalBtnClose: document.getElementById("pod-photo-modal-btn-close"),
+    fileInput: document.getElementById("pod-file-input"),
+    dropzone: document.getElementById("pod-upload-dropzone"),
+    // Form & Reset
+    btnReset: document.getElementById("pod-btn-reset"),
+    stateInput: document.getElementById("pod_canvas_state"),
+    previewInput: document.getElementById("pod_preview_image"),
+    addToCartForm: document.querySelector("form.cart")
+  };
 
-  // Ensure config and Fabric are available
-  if (typeof podCustomizerConfig === 'undefined' || typeof fabric === 'undefined') {
-    console.warn('POD Customizer: missing podCustomizerConfig or fabric.js.');
-    return;
+  // assets/js/src/utils.js
+  function escapeHtml(str) {
+    if (!str) return "";
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
   }
-
-  const config = podCustomizerConfig;
-  const PREVIEW_SIZE = 600;
-  const RENDER_SIZE = config.canvas?.width || 1200;
-  const SCALE_RATIO = RENDER_SIZE / PREVIEW_SIZE; // e.g. 2.0
-
-  // State
-  let canvas = null;
-  let mockupImg = null;
-  let clipartObj = null;
-  let textObj = null;
-  let photoObj = null;
-
-  let currentMockup = config.mockups[0] || null;
-  let currentClipart = config.cliparts[0] || null;
-  let currentFont = config.fonts[0] || 'Roboto';
-  let currentColor = '#111827';
-  let currentFontSize = 44;
-
-  /**
-   * DOM Elements
-   */
-  const elLoading = document.getElementById('pod-canvas-loading');
-  const elMockupsGrid = document.getElementById('pod-mockups-grid');
-  const elClipartGrid = document.getElementById('pod-clipart-grid');
-  const elInputText = document.getElementById('pod-input-text');
-  const elSelectFont = document.getElementById('pod-select-font');
-  const elRangeSize = document.getElementById('pod-range-size');
-  const elSizeVal = document.getElementById('pod-size-val');
-  const elCustomColor = document.getElementById('pod-custom-color');
-  const elFileInput = document.getElementById('pod-file-input');
-  const elDropzone = document.getElementById('pod-upload-dropzone');
-  const elUploadPreview = document.getElementById('pod-upload-preview');
-  const elUploadName = document.getElementById('pod-upload-name');
-  const elBtnRemovePhoto = document.getElementById('pod-btn-remove-photo');
-  const elBtnReset = document.getElementById('pod-btn-reset');
-  const elStateInput = document.getElementById('pod_canvas_state');
-  const elPreviewInput = document.getElementById('pod_preview_image');
-  const elAddToCartForm = document.querySelector('form.cart');
-
-  /**
-   * Initialize Studio
-   */
-  function init() {
-    initCanvas();
-    renderMockupGrid();
-    renderClipartGrid();
-    bindEvents();
-    loadInitialLayers();
+  function getLayersByType(type) {
+    if (!state.canvas) return [];
+    return state.canvas.getObjects().filter((obj) => obj.podType === type);
   }
-
-  /**
-   * Initialize Fabric Canvas
-   */
-  function initCanvas() {
-    canvas = new fabric.Canvas('pod-live-canvas', {
-      width: PREVIEW_SIZE,
-      height: PREVIEW_SIZE,
-      backgroundColor: '#f8fafc',
-      selection: true,
-      preserveObjectStacking: true,
-    });
-
-    // Handle user manipulation (drag, resize, rotate) on canvas
-    canvas.on('object:modified', function () {
-      syncStateToForm();
-    });
-
-    canvas.on('selection:created', onObjectSelected);
-    canvas.on('selection:updated', onObjectSelected);
-  }
-
-  /**
-   * Sync active selection back to control UI
-   */
-  function onObjectSelected(e) {
-    const selected = e.selected?.[0];
-    if (!selected) return;
-
-    if (selected === textObj && elInputText) {
-      elInputText.value = textObj.text || '';
-    }
-  }
-
-  /**
-   * Render Mockup Selection Grid
-   */
-  function renderMockupGrid() {
-    if (!elMockupsGrid) return;
-    elMockupsGrid.innerHTML = '';
-
-    config.mockups.forEach((m, idx) => {
-      const card = document.createElement('div');
-      card.className = 'pod-mockup-card' + (idx === 0 ? ' active' : '');
-      card.dataset.id = m.id;
-      card.innerHTML = `
-        <img src="${m.url}" alt="${m.name}" class="pod-mockup-thumb" />
-        <span class="pod-mockup-title">${m.name}</span>
-      `;
-      card.addEventListener('click', () => selectMockup(m, card));
-      elMockupsGrid.appendChild(card);
-    });
-  }
-
-  /**
-   * Render Clipart Selection Grid
-   */
-  function renderClipartGrid() {
-    if (!elClipartGrid) return;
-    elClipartGrid.innerHTML = '';
-
-    config.cliparts.forEach((c, idx) => {
-      const card = document.createElement('div');
-      card.className = 'pod-clipart-card' + (idx === 0 ? ' active' : '');
-      card.dataset.id = c.id;
-      card.innerHTML = `
-        <img src="${c.url}" alt="${c.name}" class="pod-clipart-thumb" />
-        <span class="pod-clipart-title">${c.name}</span>
-      `;
-      card.addEventListener('click', () => selectClipart(c, card));
-      elClipartGrid.appendChild(card);
-    });
-  }
-
-  /**
-   * Select Mockup Base Image
-   */
-  function selectMockup(m, cardEl) {
-    currentMockup = m;
-    document.querySelectorAll('.pod-mockup-card').forEach((el) => el.classList.remove('active'));
-    if (cardEl) cardEl.classList.add('active');
-
-    loadMockupImage(m.url);
-  }
-
-  /**
-   * Select Clipart
-   */
-  function selectClipart(c, cardEl) {
-    currentClipart = c;
-    document.querySelectorAll('.pod-clipart-card').forEach((el) => el.classList.remove('active'));
-    if (cardEl) cardEl.classList.add('active');
-
-    loadClipartImage(c.url);
-  }
-
-  /**
-   * Load Mockup Image Layer
-   */
-  function loadMockupImage(url) {
-    fabric.Image.fromURL(
-      url,
-      function (img) {
-        if (!img) return;
-
-        if (mockupImg) {
-          canvas.remove(mockupImg);
-        }
-
-        mockupImg = img;
-        mockupImg.set({
-          id: 'mockup_base',
-          name: currentMockup ? currentMockup.name : 'Product Base',
-          originX: 'center',
-          originY: 'center',
-          left: PREVIEW_SIZE / 2,
-          top: PREVIEW_SIZE / 2,
-          selectable: false,
-          evented: false,
-          printable: false,
-        });
-
-        // Fit to preview canvas
-        mockupImg.scaleToWidth(PREVIEW_SIZE);
-        canvas.add(mockupImg);
-        mockupImg.sendToBack();
-        canvas.renderAll();
-        syncStateToForm();
-      },
-      { crossOrigin: 'anonymous' }
-    );
-  }
-
-  /**
-   * Load Clipart Layer
-   */
-  function loadClipartImage(url) {
-    fabric.Image.fromURL(
-      url,
-      function (img) {
-        if (!img) return;
-
-        if (clipartObj) {
-          canvas.remove(clipartObj);
-        }
-
-        clipartObj = img;
-        clipartObj.set({
-          id: 'clipart_1',
-          name: currentClipart ? currentClipart.name : 'Selected Clipart',
-          originX: 'center',
-          originY: 'center',
-          left: PREVIEW_SIZE / 2,
-          top: PREVIEW_SIZE / 2 - 50,
-          selectable: true,
-          printable: true,
-          cornerColor: '#4f46e5',
-          cornerStrokeColor: '#ffffff',
-          cornerSize: 9,
-          transparentCorners: false,
-        });
-
-        clipartObj.scaleToWidth(180);
-        canvas.add(clipartObj);
-        bringDecorationsToFront();
-        canvas.setActiveObject(clipartObj);
-        canvas.renderAll();
-        syncStateToForm();
-      },
-      { crossOrigin: 'anonymous' }
-    );
-  }
-
-  /**
-   * Initialize / Update Text Layer
-   */
-  function updateTextLayer(content) {
-    const textString = content !== undefined ? content : (elInputText ? elInputText.value : 'Best Dad Ever');
-
-    if (!textObj) {
-      textObj = new fabric.Text(textString, {
-        id: 'custom_text_1',
-        name: 'Custom Title',
-        originX: 'center',
-        originY: 'center',
-        left: PREVIEW_SIZE / 2,
-        top: PREVIEW_SIZE / 2 + 100,
-        fontFamily: currentFont,
-        fontSize: currentFontSize,
-        fill: currentColor,
-        textAlign: 'center',
-        selectable: true,
-        printable: true,
-        cornerColor: '#4f46e5',
-        cornerStrokeColor: '#ffffff',
-        cornerSize: 9,
-        transparentCorners: false,
-      });
-
-      canvas.add(textObj);
-    } else {
-      textObj.set({
-        text: textString,
-        fontFamily: currentFont,
-        fontSize: currentFontSize,
-        fill: currentColor,
-      });
-    }
-
-    bringDecorationsToFront();
-    canvas.renderAll();
-    syncStateToForm();
-  }
-
-  /**
-   * Load Initial Layers
-   */
-  function loadInitialLayers() {
-    if (elLoading) elLoading.style.display = 'flex';
-
-    if (currentMockup) {
-      loadMockupImage(currentMockup.url);
-    }
-
-    if (currentClipart) {
-      loadClipartImage(currentClipart.url);
-    }
-
-    updateTextLayer(elInputText ? elInputText.value : 'Best Dad Ever');
-
-    setTimeout(() => {
-      if (elLoading) {
-        elLoading.style.opacity = '0';
-        setTimeout(() => (elLoading.style.display = 'none'), 300);
+  function highlightActiveLayerItem(selected) {
+    document.querySelectorAll(".pod-layer-item").forEach((item) => {
+      if (selected && item.dataset.podId === selected.podId) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
       }
-    }, 400);
+    });
   }
-
-  /**
-   * Ensure layers are ordered correctly
-   */
   function bringDecorationsToFront() {
-    if (mockupImg) mockupImg.sendToBack();
-    if (clipartObj) canvas.bringForward(clipartObj);
-    if (photoObj) canvas.bringForward(photoObj);
-    if (textObj) canvas.bringToFront(textObj);
+    if (state.mockupImg) state.mockupImg.sendToBack();
+    const cliparts = getLayersByType("clipart");
+    const photos = getLayersByType("photo");
+    const texts = getLayersByType("text");
+    cliparts.forEach((c) => state.canvas.bringForward(c));
+    photos.forEach((p) => state.canvas.bringForward(p));
+    texts.forEach((t2) => state.canvas.bringToFront(t2));
+  }
+  function t(key, fallback = "") {
+    if (window.podCustomizerI18n && window.podCustomizerI18n[key] !== void 0) {
+      return window.podCustomizerI18n[key];
+    }
+    if (window.podCustomizerConfig && window.podCustomizerConfig.i18n && window.podCustomizerConfig.i18n[key] !== void 0) {
+      return window.podCustomizerConfig.i18n[key];
+    }
+    if (window.wp && window.wp.i18n && typeof window.wp.i18n.__ === "function") {
+      return window.wp.i18n.__(fallback || key, "pod-customizer");
+    }
+    return fallback;
   }
 
-  /**
-   * Bind DOM Events
-   */
-  function bindEvents() {
-    // 1. Navigation Tabs
-    const tabBtns = document.querySelectorAll('.pod-tab-btn');
-    tabBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        tabBtns.forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const targetId = btn.dataset.tab;
-        document.querySelectorAll('.pod-tab-pane').forEach((p) => p.classList.remove('active'));
-        const targetPane = document.getElementById(targetId);
-        if (targetPane) targetPane.classList.add('active');
-      });
-    });
-
-    // 2. Text Input
-    if (elInputText) {
-      elInputText.addEventListener('input', (e) => {
-        updateTextLayer(e.target.value);
+  // assets/js/src/serializer.js
+  function serializeCanvasState() {
+    const layers = [];
+    if (state.mockupImg) {
+      layers.push({
+        id: "mockup_base",
+        type: "image",
+        name: state.currentMockup ? state.currentMockup.name : "Product Base",
+        url: state.currentMockup ? state.currentMockup.url : "",
+        x: Math.round(state.mockupImg.left * SCALE_RATIO),
+        y: Math.round(state.mockupImg.top * SCALE_RATIO),
+        width: Math.round(state.mockupImg.getScaledWidth() * SCALE_RATIO),
+        height: Math.round(state.mockupImg.getScaledHeight() * SCALE_RATIO),
+        rotation: Math.round(state.mockupImg.angle || 0),
+        zIndex: 1,
+        printable: false
       });
     }
-
-    // 3. Font Family Selector
-    if (elSelectFont) {
-      elSelectFont.addEventListener('change', (e) => {
-        currentFont = e.target.value;
-        updateTextLayer();
-      });
-    }
-
-    // 4. Font Size Range
-    if (elRangeSize) {
-      elRangeSize.addEventListener('input', (e) => {
-        currentFontSize = parseInt(e.target.value, 10);
-        if (elSizeVal) elSizeVal.textContent = currentFontSize + 'px';
-        updateTextLayer();
-      });
-    }
-
-    // 5. Text Color Presets
-    document.querySelectorAll('#pod-text-colors .pod-color-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#pod-text-colors .pod-color-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentColor = btn.dataset.color;
-        if (elCustomColor) elCustomColor.value = currentColor;
-        updateTextLayer();
-      });
-    });
-
-    if (elCustomColor) {
-      elCustomColor.addEventListener('input', (e) => {
-        currentColor = e.target.value;
-        updateTextLayer();
-      });
-    }
-
-    // 6. Photo Upload
-    if (elDropzone && elFileInput) {
-      elDropzone.addEventListener('click', () => elFileInput.click());
-      elDropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        elDropzone.classList.add('dragover');
-      });
-      elDropzone.addEventListener('dragleave', () => elDropzone.classList.remove('dragover'));
-      elDropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        elDropzone.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          handleFileUpload(e.dataTransfer.files[0]);
-        }
-      });
-
-      elFileInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          handleFileUpload(e.target.files[0]);
+    if (state.canvas) {
+      const objects = state.canvas.getObjects();
+      let zIdx = 2;
+      objects.forEach((obj) => {
+        if (obj === state.mockupImg) return;
+        if (obj.podType === "clipart") {
+          layers.push({
+            id: obj.podId || `clipart_${zIdx}`,
+            type: "image",
+            name: obj.clipartName || "Clipart",
+            url: obj.clipartUrl || "",
+            x: Math.round(obj.left * SCALE_RATIO),
+            y: Math.round(obj.top * SCALE_RATIO),
+            width: Math.round(obj.getScaledWidth() * SCALE_RATIO),
+            height: Math.round(obj.getScaledHeight() * SCALE_RATIO),
+            rotation: Math.round(obj.angle || 0),
+            zIndex: zIdx++,
+            printable: true
+          });
+        } else if (obj.podType === "photo") {
+          layers.push({
+            id: obj.podId || `photo_${zIdx}`,
+            type: "image",
+            name: obj.photoName || "User Photo",
+            url: obj.toDataURL ? obj.toDataURL({ format: "png" }) : "",
+            x: Math.round(obj.left * SCALE_RATIO),
+            y: Math.round(obj.top * SCALE_RATIO),
+            width: Math.round(obj.getScaledWidth() * SCALE_RATIO),
+            height: Math.round(obj.getScaledHeight() * SCALE_RATIO),
+            rotation: Math.round(obj.angle || 0),
+            zIndex: zIdx++,
+            printable: true
+          });
+        } else if (obj.podType === "text") {
+          layers.push({
+            id: obj.podId || `text_${zIdx}`,
+            type: "text",
+            name: obj.text || "Custom Text",
+            text: obj.text || "",
+            fontFamily: obj.fontFamily || "Roboto",
+            fontSize: Math.round((obj.fontSize || 44) * (obj.scaleY || 1) * SCALE_RATIO),
+            fill: obj.fill || "#111827",
+            textAlign: obj.textAlign || "center",
+            x: Math.round(obj.left * SCALE_RATIO),
+            y: Math.round(obj.top * SCALE_RATIO),
+            width: Math.round(obj.getScaledWidth() * SCALE_RATIO),
+            height: Math.round(obj.getScaledHeight() * SCALE_RATIO),
+            rotation: Math.round(obj.angle || 0),
+            zIndex: zIdx++,
+            printable: true
+          });
         }
       });
     }
-
-    if (elBtnRemovePhoto) {
-      elBtnRemovePhoto.addEventListener('click', () => {
-        if (photoObj) {
-          canvas.remove(photoObj);
-          photoObj = null;
-          if (elUploadPreview) elUploadPreview.style.display = 'none';
-          if (elDropzone) elDropzone.style.display = 'flex';
-          if (elFileInput) elFileInput.value = '';
-          canvas.renderAll();
-          syncStateToForm();
-        }
-      });
-    }
-
-    // 7. Reset Button
-    if (elBtnReset) {
-      elBtnReset.addEventListener('click', resetStudio);
-    }
-
-    // 8. Add to Cart Form Submission Interceptor
-    if (elAddToCartForm) {
-      elAddToCartForm.addEventListener('submit', onAddToCartSubmit);
+    return {
+      version: "1.0",
+      canvas: {
+        width: RENDER_SIZE,
+        height: RENDER_SIZE,
+        dpi: 300,
+        unit: "px"
+      },
+      preview: {
+        width: PREVIEW_SIZE,
+        height: PREVIEW_SIZE
+      },
+      layers
+    };
+  }
+  function syncStateToForm() {
+    if (!elements.stateInput || !state.canvas) return;
+    const payload = serializeCanvasState();
+    elements.stateInput.value = JSON.stringify(payload);
+    if (elements.previewInput) {
+      try {
+        const thumbUrl = state.canvas.toDataURL({
+          format: "jpeg",
+          quality: 0.7,
+          multiplier: 0.5
+        });
+        elements.previewInput.value = thumbUrl;
+      } catch (err) {
+      }
     }
   }
 
-  /**
-   * Handle Photo File Upload
-   */
-  function handleFileUpload(file) {
-    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
-      alert(config.i18n.invalidPhoto);
+  // assets/js/src/text.js
+  function addTextLayer(initialText, openModalNow = true) {
+    if (!fabric || !state.canvas) return null;
+    const textString = initialText || t("defaultText", "Your Custom Text");
+    const count = getLayersByType("text").length;
+    const offset = count * 35;
+    const textObj = new fabric.Text(textString, {
+      podType: "text",
+      podId: "text_" + Date.now() + "_" + Math.floor(Math.random() * 1e3),
+      originX: "center",
+      originY: "center",
+      left: PREVIEW_SIZE / 2,
+      top: PREVIEW_SIZE / 2 + 80 + offset,
+      fontFamily: "Roboto",
+      fontSize: 44,
+      fill: "#111827",
+      textAlign: "center",
+      selectable: true,
+      printable: true,
+      cornerColor: "#4f46e5",
+      cornerStrokeColor: "#ffffff",
+      cornerSize: 9,
+      transparentCorners: false
+    });
+    state.canvas.add(textObj);
+    bringDecorationsToFront();
+    state.canvas.setActiveObject(textObj);
+    state.canvas.renderAll();
+    renderTextList();
+    syncStateToForm();
+    if (openModalNow) {
+      openTextModal(textObj);
+    }
+    return textObj;
+  }
+  function renderTextList() {
+    if (!elements.textList) return;
+    elements.textList.innerHTML = "";
+    const textLayers = getLayersByType("text");
+    if (textLayers.length === 0) {
+      elements.textList.innerHTML = `
+      <div class="pod-empty-state">
+        <span>${t("emptyTextList", 'No custom text lines added yet. Click "Add Text" to create one.')}</span>
+      </div>
+    `;
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = function (f) {
-      const dataUrl = f.target.result;
-      fabric.Image.fromURL(dataUrl, function (img) {
-        if (!img) return;
-
-        if (photoObj) {
-          canvas.remove(photoObj);
+    const activeObj = state.canvas ? state.canvas.getActiveObject() : null;
+    textLayers.forEach((obj) => {
+      const item = document.createElement("div");
+      item.className = "pod-layer-item" + (activeObj === obj ? " active" : "");
+      item.dataset.podId = obj.podId;
+      item.innerHTML = `
+      <div class="pod-layer-info">
+        <span class="pod-layer-color-dot" style="background-color: ${obj.fill};"></span>
+        <div class="pod-layer-texts">
+          <span class="pod-layer-title">${escapeHtml(obj.text || "(Empty)")}</span>
+          <span class="pod-layer-subtitle">${escapeHtml(obj.fontFamily)} \u2022 ${Math.round(obj.fontSize * (obj.scaleY || 1))}px</span>
+        </div>
+      </div>
+      <div class="pod-layer-actions">
+        <button type="button" class="pod-btn-edit" title="${escapeHtml(t("titleEditText", "Edit text"))}">\u270F\uFE0F ${escapeHtml(t("btnEdit", "Edit"))}</button>
+        <button type="button" class="pod-btn-delete" title="${escapeHtml(t("titleDeleteText", "Delete text"))}">\u{1F5D1}\uFE0F ${escapeHtml(t("btnDelete", "Delete"))}</button>
+      </div>
+    `;
+      item.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        if (state.canvas) {
+          state.canvas.setActiveObject(obj);
+          state.canvas.renderAll();
         }
+        highlightActiveLayerItem(obj);
+        openTextModal(obj);
+      });
+      item.querySelector(".pod-btn-edit").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openTextModal(obj);
+      });
+      item.querySelector(".pod-btn-delete").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (state.canvas) {
+          state.canvas.remove(obj);
+          state.canvas.renderAll();
+        }
+        renderTextList();
+        syncStateToForm();
+      });
+      elements.textList.appendChild(item);
+    });
+  }
+  function openTextModal(textObj) {
+    if (!elements.textModal || !textObj) return;
+    state.editingTextObj = textObj;
+    if (elements.textModalTitle) {
+      elements.textModalTitle.textContent = t("modalEditText", "Edit Text");
+    }
+    if (state.canvas) {
+      state.canvas.setActiveObject(textObj);
+      state.canvas.renderAll();
+    }
+    if (elements.textModalTitle) {
+      elements.textModalTitle.textContent = "Edit Text";
+    }
+    if (elements.modalInputText) {
+      elements.modalInputText.value = textObj.text || "";
+    }
+    if (elements.modalSelectFont) {
+      elements.modalSelectFont.value = textObj.fontFamily || "Roboto";
+    }
+    const effectiveSize = Math.round((textObj.fontSize || 44) * (textObj.scaleY || 1));
+    if (elements.modalRangeSize) {
+      elements.modalRangeSize.value = effectiveSize;
+    }
+    if (elements.modalSizeVal) {
+      elements.modalSizeVal.textContent = effectiveSize + "px";
+    }
+    updateModalColorSelection(textObj.fill || "#111827");
+    elements.textModal.style.display = "flex";
+    if (elements.modalInputText) {
+      elements.modalInputText.focus();
+    }
+  }
+  function updateModalColorSelection(color) {
+    if (!elements.modalColorsContainer) return;
+    const btns = elements.modalColorsContainer.querySelectorAll(".pod-color-btn");
+    btns.forEach((btn) => {
+      if (btn.dataset.color.toLowerCase() === color.toLowerCase()) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+    if (elements.modalCustomColor) {
+      elements.modalCustomColor.value = color.startsWith("#") && color.length === 7 ? color : "#111827";
+    }
+  }
+  function closeTextModal() {
+    if (!elements.textModal) return;
+    elements.textModal.style.display = "none";
+    state.editingTextObj = null;
+    renderTextList();
+    syncStateToForm();
+  }
+  function initTextEvents() {
+    if (elements.btnAddText) {
+      elements.btnAddText.addEventListener("click", () => {
+        addTextLayer("Your Custom Text", true);
+      });
+    }
+    if (elements.textModalBtnClose) {
+      elements.textModalBtnClose.addEventListener("click", closeTextModal);
+    }
+    if (elements.textModalBtnDone) {
+      elements.textModalBtnDone.addEventListener("click", closeTextModal);
+    }
+    if (elements.textModal) {
+      elements.textModal.addEventListener("click", (e) => {
+        if (e.target === elements.textModal) closeTextModal();
+      });
+    }
+    if (elements.modalInputText) {
+      elements.modalInputText.addEventListener("input", (e) => {
+        if (!state.editingTextObj) return;
+        state.editingTextObj.set({ text: e.target.value });
+        if (state.canvas) state.canvas.renderAll();
+        renderTextList();
+      });
+    }
+    if (elements.modalSelectFont) {
+      elements.modalSelectFont.addEventListener("change", (e) => {
+        if (!state.editingTextObj) return;
+        state.editingTextObj.set({ fontFamily: e.target.value });
+        if (state.canvas) state.canvas.renderAll();
+        renderTextList();
+      });
+    }
+    if (elements.modalRangeSize) {
+      elements.modalRangeSize.addEventListener("input", (e) => {
+        if (!state.editingTextObj) return;
+        const size = parseInt(e.target.value, 10);
+        state.editingTextObj.set({ fontSize: size, scaleX: 1, scaleY: 1 });
+        if (elements.modalSizeVal) elements.modalSizeVal.textContent = size + "px";
+        if (state.canvas) state.canvas.renderAll();
+        renderTextList();
+      });
+    }
+    if (elements.modalColorsContainer) {
+      const colorBtns = elements.modalColorsContainer.querySelectorAll(".pod-color-btn");
+      colorBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!state.editingTextObj) return;
+          const color = btn.dataset.color;
+          state.editingTextObj.set({ fill: color });
+          updateModalColorSelection(color);
+          if (state.canvas) state.canvas.renderAll();
+          renderTextList();
+        });
+      });
+    }
+    if (elements.modalCustomColor) {
+      elements.modalCustomColor.addEventListener("input", (e) => {
+        if (!state.editingTextObj) return;
+        const color = e.target.value;
+        state.editingTextObj.set({ fill: color });
+        updateModalColorSelection(color);
+        if (state.canvas) state.canvas.renderAll();
+        renderTextList();
+      });
+    }
+  }
 
-        photoObj = img;
-        photoObj.set({
-          id: 'user_photo_1',
-          name: file.name,
-          originX: 'center',
-          originY: 'center',
-          left: PREVIEW_SIZE / 2,
-          top: PREVIEW_SIZE / 2 - 30,
+  // assets/js/src/clipart.js
+  function renderClipartGrid() {
+    if (!elements.clipartGrid || !config.cliparts) return;
+    elements.clipartGrid.innerHTML = "";
+    config.cliparts.forEach((c) => {
+      const card = document.createElement("div");
+      card.className = "pod-clipart-card";
+      card.dataset.id = c.id;
+      card.innerHTML = `
+      <img src="${c.url}" alt="${c.name}" class="pod-clipart-thumb" />
+      <span class="pod-clipart-title">${c.name}</span>
+    `;
+      card.addEventListener("click", () => onSelectClipartFromModal(c));
+      elements.clipartGrid.appendChild(card);
+    });
+  }
+  function onSelectClipartFromModal(c) {
+    if (state.editingClipartObj) {
+      replaceClipartLayer(state.editingClipartObj, c);
+    } else {
+      addClipartLayer(c);
+    }
+    closeClipartModal();
+  }
+  function openClipartModal(targetObj = null) {
+    state.editingClipartObj = targetObj;
+    if (elements.clipartModalTitle) {
+      elements.clipartModalTitle.textContent = targetObj ? t("modalChangeClipart", "Change Clipart Graphic") : t("modalChooseClipart", "Choose Clipart Graphic");
+    }
+    if (elements.clipartModal) {
+      elements.clipartModal.style.display = "flex";
+    }
+  }
+  function closeClipartModal() {
+    state.editingClipartObj = null;
+    if (elements.clipartModal) {
+      elements.clipartModal.style.display = "none";
+    }
+  }
+  function addClipartLayer(clipartItem) {
+    if (!fabric || !state.canvas) return;
+    fabric.Image.fromURL(
+      clipartItem.url,
+      function(img) {
+        if (!img) return;
+        const count = getLayersByType("clipart").length;
+        const offset = count % 4 * 20;
+        img.set({
+          podType: "clipart",
+          podId: "clipart_" + Date.now() + "_" + Math.floor(Math.random() * 1e3),
+          clipartName: clipartItem.name,
+          clipartUrl: clipartItem.url,
+          originX: "center",
+          originY: "center",
+          left: PREVIEW_SIZE / 2 + offset,
+          top: PREVIEW_SIZE / 2 - 50 + offset,
           selectable: true,
           printable: true,
-          cornerColor: '#06b6d4',
-          cornerStrokeColor: '#ffffff',
+          cornerColor: "#4f46e5",
+          cornerStrokeColor: "#ffffff",
           cornerSize: 9,
-          transparentCorners: false,
+          transparentCorners: false
         });
-
-        photoObj.scaleToWidth(160);
-        canvas.add(photoObj);
+        img.scaleToWidth(150);
+        state.canvas.add(img);
         bringDecorationsToFront();
-        canvas.setActiveObject(photoObj);
-        canvas.renderAll();
+        state.canvas.setActiveObject(img);
+        state.canvas.renderAll();
+        renderClipartList();
+        syncStateToForm();
+      },
+      { crossOrigin: "anonymous" }
+    );
+  }
+  function replaceClipartLayer(targetObj, clipartItem) {
+    if (!fabric) return;
+    fabric.Image.fromURL(
+      clipartItem.url,
+      function(newImg) {
+        if (!newImg) return;
+        targetObj.setElement(newImg.getElement());
+        targetObj.clipartName = clipartItem.name;
+        targetObj.clipartUrl = clipartItem.url;
+        if (state.canvas) state.canvas.renderAll();
+        renderClipartList();
+        syncStateToForm();
+      },
+      { crossOrigin: "anonymous" }
+    );
+  }
+  function renderClipartList() {
+    if (!elements.clipartList) return;
+    elements.clipartList.innerHTML = "";
+    const clipartLayers = getLayersByType("clipart");
+    if (clipartLayers.length === 0) {
+      elements.clipartList.innerHTML = `
+      <div class="pod-empty-state">
+        <span>${t("emptyClipartList", 'No clipart graphics on canvas. Click "Add Clipart" to select one.')}</span>
+      </div>
+    `;
+      return;
+    }
+    const activeObj = state.canvas ? state.canvas.getActiveObject() : null;
+    clipartLayers.forEach((obj) => {
+      const item = document.createElement("div");
+      item.className = "pod-layer-item" + (activeObj === obj ? " active" : "");
+      item.dataset.podId = obj.podId;
+      item.innerHTML = `
+      <div class="pod-layer-info">
+        <img src="${obj.clipartUrl}" class="pod-layer-thumb" alt="Clipart" />
+        <div class="pod-layer-texts">
+          <span class="pod-layer-title">${escapeHtml(obj.clipartName || "Clipart")}</span>
+          <span class="pod-layer-subtitle">${Math.round(obj.getScaledWidth())} \xD7 ${Math.round(obj.getScaledHeight())} px</span>
+        </div>
+      </div>
+      <div class="pod-layer-actions">
+        <button type="button" class="pod-btn-edit" title="${escapeHtml(t("titleChangeClipart", "Change clipart"))}">\u270F\uFE0F ${escapeHtml(t("btnChange", "Change"))}</button>
+        <button type="button" class="pod-btn-delete" title="${escapeHtml(t("titleDeleteClipart", "Delete clipart"))}">\u{1F5D1}\uFE0F ${escapeHtml(t("btnDelete", "Delete"))}</button>
+      </div>
+    `;
+      item.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        if (state.canvas) {
+          state.canvas.setActiveObject(obj);
+          state.canvas.renderAll();
+        }
+        highlightActiveLayerItem(obj);
+        openClipartModal(obj);
+      });
+      item.querySelector(".pod-btn-edit").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openClipartModal(obj);
+      });
+      item.querySelector(".pod-btn-delete").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (state.canvas) {
+          state.canvas.remove(obj);
+          state.canvas.renderAll();
+        }
+        renderClipartList();
+        syncStateToForm();
+      });
+      elements.clipartList.appendChild(item);
+    });
+  }
+  function initClipartEvents() {
+    if (elements.btnAddClipart) {
+      elements.btnAddClipart.addEventListener("click", () => openClipartModal(null));
+    }
+    if (elements.clipartModalBtnClose) {
+      elements.clipartModalBtnClose.addEventListener("click", closeClipartModal);
+    }
+    if (elements.clipartModal) {
+      elements.clipartModal.addEventListener("click", (e) => {
+        if (e.target === elements.clipartModal) closeClipartModal();
+      });
+    }
+  }
 
-        if (elDropzone) elDropzone.style.display = 'none';
-        if (elUploadPreview) elUploadPreview.style.display = 'flex';
-        if (elUploadName) elUploadName.textContent = file.name;
-
+  // assets/js/src/photo.js
+  function openPhotoModal(targetObj = null) {
+    state.editingPhotoObj = targetObj;
+    if (elements.photoModalTitle) {
+      elements.photoModalTitle.textContent = targetObj ? t("modalChangePhoto", "Change Uploaded Photo") : t("modalUploadPhoto", "Upload Personal Photo");
+    }
+    if (elements.photoModal) {
+      elements.photoModal.style.display = "flex";
+    }
+  }
+  function closePhotoModal() {
+    state.editingPhotoObj = null;
+    if (elements.photoModal) {
+      elements.photoModal.style.display = "none";
+    }
+  }
+  function handlePhotoUploadFiles(files) {
+    if (!files || files.length === 0) return;
+    if (state.editingPhotoObj) {
+      replacePhotoLayer(state.editingPhotoObj, files[0]);
+    } else {
+      files.forEach((f) => addPhotoLayer(f));
+    }
+    closePhotoModal();
+  }
+  function addPhotoLayer(file) {
+    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
+      alert(t("invalidPhoto", "Please select a valid image file (PNG, JPG, WebP)"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(f) {
+      const dataUrl = f.target.result;
+      fabric.Image.fromURL(dataUrl, function(img) {
+        if (!img || !state.canvas) return;
+        const count = getLayersByType("photo").length;
+        const offset = count % 3 * 25;
+        img.set({
+          podType: "photo",
+          podId: "photo_" + Date.now() + "_" + Math.floor(Math.random() * 1e3),
+          photoName: file.name,
+          originX: "center",
+          originY: "center",
+          left: PREVIEW_SIZE / 2 + offset,
+          top: PREVIEW_SIZE / 2 - 30 + offset,
+          selectable: true,
+          printable: true,
+          cornerColor: "#06b6d4",
+          cornerStrokeColor: "#ffffff",
+          cornerSize: 9,
+          transparentCorners: false
+        });
+        img.scaleToWidth(160);
+        state.canvas.add(img);
+        bringDecorationsToFront();
+        state.canvas.setActiveObject(img);
+        state.canvas.renderAll();
+        renderPhotoList();
         syncStateToForm();
       });
     };
     reader.readAsDataURL(file);
   }
-
-  /**
-   * Reset Studio to default
-   */
-  function resetStudio() {
-    if (elInputText) elInputText.value = 'Best Dad Ever';
-    currentFontSize = 44;
-    if (elRangeSize) elRangeSize.value = 44;
-    if (elSizeVal) elSizeVal.textContent = '44px';
-    currentFont = 'Roboto';
-    if (elSelectFont) elSelectFont.value = 'Roboto';
-    currentColor = '#111827';
-    if (elCustomColor) elCustomColor.value = currentColor;
-
-    if (photoObj) {
-      canvas.remove(photoObj);
-      photoObj = null;
-      if (elUploadPreview) elUploadPreview.style.display = 'none';
-      if (elDropzone) elDropzone.style.display = 'flex';
-      if (elFileInput) elFileInput.value = '';
+  function replacePhotoLayer(targetObj, file) {
+    if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/)) {
+      alert(t("invalidPhoto", "Please select a valid image file (PNG, JPG, WebP)"));
+      return;
     }
-
-    if (config.mockups[0]) {
-      selectMockup(config.mockups[0], document.querySelector('.pod-mockup-card'));
-    }
-    if (config.cliparts[0]) {
-      selectClipart(config.cliparts[0], document.querySelector('.pod-clipart-card'));
-    }
-
-    updateTextLayer('Best Dad Ever');
-  }
-
-  /**
-   * Serialize Strict JSON Data Contract
-   * Scales coordinates from 600x600 preview to 1200x1200 render resolution.
-   */
-  function serializeCanvasState() {
-    const layers = [];
-
-    // 1. Mockup Background Layer
-    if (mockupImg) {
-      layers.push({
-        id: 'mockup_base',
-        type: 'image',
-        name: currentMockup ? currentMockup.name : 'Product Base',
-        url: currentMockup ? currentMockup.url : '',
-        x: Math.round(mockupImg.left * SCALE_RATIO),
-        y: Math.round(mockupImg.top * SCALE_RATIO),
-        width: Math.round(mockupImg.getScaledWidth() * SCALE_RATIO),
-        height: Math.round(mockupImg.getScaledHeight() * SCALE_RATIO),
-        rotation: Math.round(mockupImg.angle || 0),
-        zIndex: 1,
-        printable: false,
+    const reader = new FileReader();
+    reader.onload = function(f) {
+      const dataUrl = f.target.result;
+      fabric.Image.fromURL(dataUrl, function(newImg) {
+        if (!newImg) return;
+        targetObj.setElement(newImg.getElement());
+        targetObj.photoName = file.name;
+        if (state.canvas) state.canvas.renderAll();
+        renderPhotoList();
+        syncStateToForm();
       });
-    }
-
-    // 2. Clipart Layer
-    if (clipartObj) {
-      layers.push({
-        id: 'clipart_1',
-        type: 'image',
-        name: currentClipart ? currentClipart.name : 'Selected Clipart',
-        url: currentClipart ? currentClipart.url : '',
-        x: Math.round(clipartObj.left * SCALE_RATIO),
-        y: Math.round(clipartObj.top * SCALE_RATIO),
-        width: Math.round(clipartObj.getScaledWidth() * SCALE_RATIO),
-        height: Math.round(clipartObj.getScaledHeight() * SCALE_RATIO),
-        rotation: Math.round(clipartObj.angle || 0),
-        zIndex: 2,
-        printable: true,
-      });
-    }
-
-    // 3. User Uploaded Photo (if any)
-    if (photoObj) {
-      layers.push({
-        id: 'user_photo_1',
-        type: 'image',
-        name: photoObj.name || 'User Photo',
-        url: photoObj.toDataURL({ format: 'png' }),
-        x: Math.round(photoObj.left * SCALE_RATIO),
-        y: Math.round(photoObj.top * SCALE_RATIO),
-        width: Math.round(photoObj.getScaledWidth() * SCALE_RATIO),
-        height: Math.round(photoObj.getScaledHeight() * SCALE_RATIO),
-        rotation: Math.round(photoObj.angle || 0),
-        zIndex: 3,
-        printable: true,
-      });
-    }
-
-    // 4. Custom Text Layer
-    if (textObj) {
-      layers.push({
-        id: 'custom_text_1',
-        type: 'text',
-        name: 'Custom Title',
-        text: textObj.text || '',
-        fontFamily: textObj.fontFamily || 'Roboto',
-        fontSize: Math.round((textObj.fontSize || 44) * (textObj.scaleY || 1) * SCALE_RATIO),
-        fill: textObj.fill || '#111827',
-        textAlign: textObj.textAlign || 'center',
-        x: Math.round(textObj.left * SCALE_RATIO),
-        y: Math.round(textObj.top * SCALE_RATIO),
-        rotation: Math.round(textObj.angle || 0),
-        zIndex: 4,
-        printable: true,
-      });
-    }
-
-    return {
-      version: '1.0',
-      canvas: {
-        width: RENDER_SIZE,
-        height: RENDER_SIZE,
-        dpi: 300,
-        unit: 'px',
-      },
-      preview: {
-        width: PREVIEW_SIZE,
-        height: PREVIEW_SIZE,
-      },
-      layers: layers,
     };
+    reader.readAsDataURL(file);
+  }
+  function renderPhotoList() {
+    if (!elements.photoList) return;
+    elements.photoList.innerHTML = "";
+    const photoLayers = getLayersByType("photo");
+    if (photoLayers.length === 0) {
+      elements.photoList.innerHTML = `
+      <div class="pod-empty-state">
+        <span>${t("emptyPhotoList", 'No uploaded photos on canvas. Click "Add Photo" to upload.')}</span>
+      </div>
+    `;
+      return;
+    }
+    const activeObj = state.canvas ? state.canvas.getActiveObject() : null;
+    photoLayers.forEach((obj) => {
+      const item = document.createElement("div");
+      item.className = "pod-layer-item" + (activeObj === obj ? " active" : "");
+      item.dataset.podId = obj.podId;
+      const thumbSrc = obj.toDataURL ? obj.toDataURL({ format: "jpeg", quality: 0.3, multiplier: 0.2 }) : "";
+      item.innerHTML = `
+      <div class="pod-layer-info">
+        <img src="${thumbSrc}" class="pod-layer-thumb" alt="Photo" />
+        <div class="pod-layer-texts">
+          <span class="pod-layer-title">${escapeHtml(obj.photoName || t("uploadedPhoto", "Uploaded Photo"))}</span>
+          <span class="pod-layer-subtitle">${Math.round(obj.getScaledWidth())} \xD7 ${Math.round(obj.getScaledHeight())} px</span>
+        </div>
+      </div>
+      <div class="pod-layer-actions">
+        <button type="button" class="pod-btn-edit" title="${escapeHtml(t("titleChangePhoto", "Change photo"))}">\u270F\uFE0F ${escapeHtml(t("btnChange", "Change"))}</button>
+        <button type="button" class="pod-btn-delete" title="${escapeHtml(t("titleDeletePhoto", "Delete photo"))}">\u{1F5D1}\uFE0F ${escapeHtml(t("btnDelete", "Delete"))}</button>
+      </div>
+    `;
+      item.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        if (state.canvas) {
+          state.canvas.setActiveObject(obj);
+          state.canvas.renderAll();
+        }
+        highlightActiveLayerItem(obj);
+        openPhotoModal(obj);
+      });
+      item.querySelector(".pod-btn-edit").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openPhotoModal(obj);
+      });
+      item.querySelector(".pod-btn-delete").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (state.canvas) {
+          state.canvas.remove(obj);
+          state.canvas.renderAll();
+        }
+        renderPhotoList();
+        syncStateToForm();
+      });
+      elements.photoList.appendChild(item);
+    });
+  }
+  function initPhotoEvents() {
+    if (elements.btnAddPhoto) {
+      elements.btnAddPhoto.addEventListener("click", () => openPhotoModal(null));
+    }
+    if (elements.photoModalBtnClose) {
+      elements.photoModalBtnClose.addEventListener("click", closePhotoModal);
+    }
+    if (elements.photoModal) {
+      elements.photoModal.addEventListener("click", (e) => {
+        if (e.target === elements.photoModal) closePhotoModal();
+      });
+    }
+    if (elements.dropzone && elements.fileInput) {
+      elements.dropzone.addEventListener("click", () => elements.fileInput.click());
+      elements.fileInput.addEventListener("change", (e) => {
+        const files = Array.from(e.target.files || []);
+        handlePhotoUploadFiles(files);
+        elements.fileInput.value = "";
+      });
+      elements.dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        elements.dropzone.style.borderColor = "#4f46e5";
+      });
+      elements.dropzone.addEventListener("dragleave", () => {
+        elements.dropzone.style.borderColor = "#cbd5e1";
+      });
+      elements.dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        elements.dropzone.style.borderColor = "#cbd5e1";
+        const files = Array.from(e.dataTransfer.files || []);
+        handlePhotoUploadFiles(files);
+      });
+    }
   }
 
-  /**
-   * Sync serialized JSON state to form hidden fields
-   */
-  function syncStateToForm() {
-    if (!elStateInput || !canvas) return;
-
-    const payload = serializeCanvasState();
-    elStateInput.value = JSON.stringify(payload);
-
-    // Generate small thumbnail preview image
-    if (elPreviewInput) {
-      try {
-        const thumbUrl = canvas.toDataURL({
-          format: 'jpeg',
-          quality: 0.7,
-          multiplier: 0.5,
+  // assets/js/src/mockup.js
+  function renderMockupGrid() {
+    if (!elements.mockupsGrid || !config.mockups) return;
+    elements.mockupsGrid.innerHTML = "";
+    config.mockups.forEach((m, idx) => {
+      const card = document.createElement("div");
+      card.className = "pod-mockup-card" + (idx === 0 ? " active" : "");
+      card.dataset.id = m.id;
+      card.innerHTML = `
+      <img src="${m.url}" alt="${m.name}" class="pod-mockup-thumb" />
+      <span class="pod-mockup-title">${m.name}</span>
+    `;
+      card.addEventListener("click", () => selectMockup(m, card));
+      elements.mockupsGrid.appendChild(card);
+    });
+  }
+  function selectMockup(mockup, activeCard) {
+    state.currentMockup = mockup;
+    document.querySelectorAll(".pod-mockup-card").forEach((c) => c.classList.remove("active"));
+    if (activeCard) activeCard.classList.add("active");
+    loadMockupImage(mockup.url);
+  }
+  function loadMockupImage(url) {
+    if (!fabric || !state.canvas) return;
+    fabric.Image.fromURL(
+      url,
+      function(img) {
+        if (!img) return;
+        if (state.mockupImg) {
+          state.canvas.remove(state.mockupImg);
+        }
+        state.mockupImg = img;
+        state.mockupImg.set({
+          podType: "mockup",
+          podId: "mockup_base",
+          originX: "center",
+          originY: "center",
+          left: PREVIEW_SIZE / 2,
+          top: PREVIEW_SIZE / 2,
+          selectable: false,
+          evented: false,
+          printable: false
         });
-        elPreviewInput.value = thumbUrl;
-      } catch (err) {
-        // SVG cross-origin canvas security restriction fallback
-      }
-    }
+        state.mockupImg.scaleToWidth(PREVIEW_SIZE * 0.94);
+        state.canvas.add(state.mockupImg);
+        state.mockupImg.sendToBack();
+        state.canvas.renderAll();
+        syncStateToForm();
+      },
+      { crossOrigin: "anonymous" }
+    );
   }
 
-  /**
-   * Validate state on Add to Cart submission
-   */
-  function onAddToCartSubmit(e) {
-    if (!elStateInput) return;
-
+  // assets/js/src/canvas.js
+  function renderAllLayerLists() {
+    renderTextList();
+    renderClipartList();
+    renderPhotoList();
+  }
+  function initCanvas() {
+    if (!fabric) return;
+    state.canvas = new fabric.Canvas("pod-live-canvas", {
+      width: PREVIEW_SIZE,
+      height: PREVIEW_SIZE,
+      backgroundColor: "#f8fafc",
+      selection: true,
+      preserveObjectStacking: true
+    });
+    state.canvas.on("object:modified", function() {
+      syncStateToForm();
+      renderAllLayerLists();
+    });
+    state.canvas.on("selection:created", onObjectSelected);
+    state.canvas.on("selection:updated", onObjectSelected);
+    state.canvas.on("selection:cleared", onSelectionCleared);
+    state.canvas.on("mouse:dblclick", function(opt) {
+      const target = opt.target;
+      if (!target) return;
+      if (target.podType === "text") {
+        openTextModal(target);
+      } else if (target.podType === "clipart") {
+        openClipartModal(target);
+      } else if (target.podType === "photo") {
+        openPhotoModal(target);
+      }
+    });
+  }
+  function onObjectSelected(e) {
+    const selected = e.selected?.[0];
+    if (!selected) return;
+    highlightActiveLayerItem(selected);
+  }
+  function onSelectionCleared() {
+    document.querySelectorAll(".pod-layer-item").forEach((item) => item.classList.remove("active"));
+  }
+  function resetStudio() {
+    if (!state.canvas) return;
+    const objects = state.canvas.getObjects().slice();
+    objects.forEach((obj) => {
+      if (obj.podType && obj.podType !== "mockup") {
+        state.canvas.remove(obj);
+      }
+    });
+    if (state.currentMockup) {
+      loadMockupImage(state.currentMockup.url);
+    }
+    renderAllLayerLists();
     syncStateToForm();
+  }
 
-    const textValue = elInputText ? elInputText.value.trim() : '';
-    if (!textValue) {
+  // assets/js/src/cart.js
+  function onAddToCartSubmit(e) {
+    if (!elements.stateInput || !state.canvas) return;
+    syncStateToForm();
+    const printableLayers = state.canvas.getObjects().filter((obj) => obj.podType && obj.podType !== "mockup");
+    if (printableLayers.length === 0) {
       e.preventDefault();
-      alert(config.i18n.emptyTextAlert);
-      if (elInputText) {
-        elInputText.focus();
-        elInputText.style.borderColor = '#ef4444';
-      }
+      alert(t("emptyDesignAlert", "Please add at least one customization (text, clipart, or photo) to your design."));
       return false;
     }
-
-    if (!elStateInput.value) {
+    const textLayers = getLayersByType("text");
+    if (textLayers.length > 0) {
+      const hasValidText = textLayers.some((t2) => t2.text && t2.text.trim().length > 0);
+      if (!hasValidText) {
+        e.preventDefault();
+        alert(t("emptyTextAlert", "Please enter custom text for your design."));
+        return false;
+      }
+    }
+    if (!elements.stateInput.value) {
       e.preventDefault();
-      alert('Design state could not be serialized.');
+      alert(t("saveStateFailed", "Could not save custom design state. Please try again."));
       return false;
     }
   }
 
-  // Run when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  // assets/js/src/main.js
+  function init() {
+    if (typeof window.podCustomizerConfig === "undefined" || typeof window.fabric === "undefined") {
+      console.warn("POD Customizer: missing podCustomizerConfig or fabric.js.");
+      return;
+    }
+    initCanvas();
+    renderMockupGrid();
+    renderClipartGrid();
+    bindGlobalEvents();
+    loadInitialLayers();
+  }
+  function bindGlobalEvents() {
+    const tabBtns = document.querySelectorAll(".pod-tab-btn");
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const targetId = btn.dataset.tab;
+        document.querySelectorAll(".pod-tab-pane").forEach((p) => p.classList.remove("active"));
+        const targetPane = document.getElementById(targetId);
+        if (targetPane) targetPane.classList.add("active");
+      });
+    });
+    initTextEvents();
+    initClipartEvents();
+    initPhotoEvents();
+    if (elements.btnReset) {
+      elements.btnReset.addEventListener("click", resetStudio);
+    }
+    if (elements.addToCartForm) {
+      elements.addToCartForm.addEventListener("submit", onAddToCartSubmit);
+    }
+  }
+  function loadInitialLayers() {
+    if (elements.loading) elements.loading.style.display = "flex";
+    if (state.currentMockup) {
+      loadMockupImage(state.currentMockup.url);
+    }
+    if (config.cliparts && config.cliparts[0]) {
+      addClipartLayer(config.cliparts[0]);
+    }
+    addTextLayer("Best Dad Ever", false);
+    setTimeout(() => {
+      if (elements.loading) {
+        elements.loading.style.opacity = "0";
+        setTimeout(() => elements.loading.style.display = "none", 300);
+      }
+    }, 400);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }

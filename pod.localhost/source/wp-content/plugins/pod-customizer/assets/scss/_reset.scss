@@ -1,0 +1,28 @@
+// ==========================================
+// POD Customizer: Global Resets & Strict Rules
+// ==========================================
+
+@use 'variables' as *;
+
+.pod-customizer-app {
+  margin: 24px 0 28px 0;
+  padding: 20px;
+  background: var(--pod-surface);
+  border: 1px solid var(--pod-border);
+  font-family: $pod-font-family;
+  color: var(--pod-text-main);
+  box-sizing: border-box;
+
+  // Strict zero-radius across customizer components
+  &,
+  *:not(.pod-spinner) {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+  }
+
+  // Cancel theme default margins on buttons (e.g. Flatsome)
+  button {
+    margin-bottom: 0 !important;
+    margin-right: 0 !important;
+  }
+}

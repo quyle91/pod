@@ -344,6 +344,22 @@ class OrderHandler implements HandlerInterface {
         $zip_url = self::resolve_file_url($item->get_meta(self::ORDER_ITEM_META_ZIP_URL));
         $preview_url = self::resolve_file_url($item->get_meta(self::ORDER_ITEM_META_PREVIEW_URL));
 
+        // Auto-check if production files are ready
+        if (empty($print_url) && empty($zip_url)) {
+            $raw_state = $item->get_meta(self::ORDER_ITEM_META_STATE);
+            if (!empty($raw_state)) {
+                $dispatcher = new OrderWebhookDispatcher();
+                $dispatcher->dispatch_item($order_id, $item_id);
+                wp_send_json_error([
+                    'error' => __('File in ấn và gói ZIP cho sản phẩm này chưa sẵn sàng. Hệ thống vừa tự động kích hoạt render lại, vui lòng đợi ít giây rồi bấm gửi lại!', 'pod-customizer')
+                ]);
+            } else {
+                wp_send_json_error([
+                    'error' => __('Sản phẩm này không có dữ liệu tùy biến in ấn.', 'pod-customizer')
+                ]);
+            }
+        }
+
         $product_name = $item->get_name();
         $qty = $item->get_quantity();
         /** @var \WC_Order_Item_Product $item */
@@ -360,12 +376,31 @@ class OrderHandler implements HandlerInterface {
         }
         $variation_html = !empty($variations) ? implode(' | ', $variations) : esc_html__('Standard / None', 'pod-customizer');
 
-        // Shipping & Recipient Details
-        $shipping_name = $order->get_formatted_shipping_full_name() ?: $order->get_formatted_billing_full_name();
-        $shipping_address = $order->get_formatted_shipping_address() ?: $order->get_formatted_billing_address();
+        // Shipping & Recipient Details (safely trimmed to avoid space-character bug)
+        $shipping_name = trim($order->get_formatted_shipping_full_name());
+        if (empty($shipping_name)) {
+            $shipping_name = trim($order->get_formatted_billing_full_name());
+        }
+        if (empty($shipping_name)) {
+            $shipping_name = trim($order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name());
+        }
+        if (empty($shipping_name)) {
+            $shipping_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+        }
+
+        $shipping_address = trim($order->get_formatted_shipping_address());
+        if (empty($shipping_address)) {
+            $shipping_address = trim($order->get_formatted_billing_address());
+        }
+
         $shipping_phone = $order->get_billing_phone();
         $customer_note = $order->get_customer_note();
         $order_date = $order->get_date_created() ? $order->get_date_created()->date_i18n(get_option('date_format') . ' ' . get_option('time_format')) : date('Y-m-d H:i:s');
+
+        // Generate Signed Secure Download Links with HMAC-SHA256 Token (7 days expiry)
+        $secure_zip_url = \PodCustomizer\Services\PrintStorageManager::generate_signed_download_url($order_id, $item_id, 'zip');
+        $secure_print_url = \PodCustomizer\Services\PrintStorageManager::generate_signed_download_url($order_id, $item_id, 'print');
+        $expires_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), time() + (7 * DAY_IN_SECONDS));
 
         $subject = sprintf('[POD Production Order #%d] %s (Qty: %d)', $order_id, $product_name, $qty);
 
@@ -392,25 +427,26 @@ class OrderHandler implements HandlerInterface {
         $message .= '<tr><td style="padding: 8px 12px; background: #f8fafc; font-weight: 600; border: 1px solid #e2e8f0;">' . esc_html__('Print Standard', 'pod-customizer') . '</td><td style="padding: 8px 12px; border: 1px solid #e2e8f0;">300 DPI Transparent PNG (sRGB)</td></tr>';
         $message .= '</table>';
 
-        // 3. Production Files & Download Section
+        // 3. Production Files & Secure Download Section
         $message .= '<h2 style="font-size: 15px; margin: 24px 0 12px 0; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">📦 ' . esc_html__('2. Production Files & Downloads', 'pod-customizer') . '</h2>';
         $message .= '<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 18px; margin-bottom: 20px;">';
         
-        if ($zip_url) {
-            $message .= '<div style="margin-bottom: 14px;">';
-            $message .= '<a href="' . esc_url($zip_url) . '" target="_blank" style="display: inline-block; padding: 12px 24px; background: #059669; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-            $message .= '📦 ' . esc_html__('DOWNLOAD COMPLETE PRODUCTION PACKAGE (ZIP)', 'pod-customizer') . '</a>';
-            $message .= '<div style="font-size: 12px; color: #64748b; margin-top: 6px;">' . esc_html__('Includes: 300 DPI PNG, Mockup Preview, Raw Assets, and Production Specs.', 'pod-customizer') . '<br /><a href="' . esc_url($zip_url) . '" style="color:#059669; word-break:break-all;">' . esc_url($zip_url) . '</a></div>';
-            $message .= '</div>';
-        }
+        $message .= '<div style="margin-bottom: 14px;">';
+        $message .= '<a href="' . esc_url($secure_zip_url) . '" target="_blank" style="display: inline-block; padding: 12px 24px; background: #059669; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        $message .= '📦 ' . esc_html__('DOWNLOAD COMPLETE PRODUCTION PACKAGE (ZIP)', 'pod-customizer') . '</a>';
+        $message .= '<div style="font-size: 12px; color: #64748b; margin-top: 6px;">' . esc_html__('Includes: 300 DPI PNG, Mockup Preview, Raw Assets, and Production Specs.', 'pod-customizer') . '<br /><a href="' . esc_url($secure_zip_url) . '" style="color:#059669; word-break:break-all;">' . esc_url($secure_zip_url) . '</a></div>';
+        $message .= '</div>';
 
-        if ($print_url) {
-            $message .= '<div>';
-            $message .= '<a href="' . esc_url($print_url) . '" target="_blank" style="display: inline-block; padding: 9px 18px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px;">';
-            $message .= '⬇️ ' . esc_html__('Download Standalone 300 DPI Print File (PNG)', 'pod-customizer') . '</a>';
-            $message .= '<div style="font-size: 11px; color: #64748b; margin-top: 4px;"><a href="' . esc_url($print_url) . '" style="color:#4f46e5; word-break:break-all;">' . esc_url($print_url) . '</a></div>';
-            $message .= '</div>';
-        }
+        $message .= '<div>';
+        $message .= '<a href="' . esc_url($secure_print_url) . '" target="_blank" style="display: inline-block; padding: 9px 18px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px;">';
+        $message .= '⬇️ ' . esc_html__('Download Standalone 300 DPI Print File (PNG)', 'pod-customizer') . '</a>';
+        $message .= '<div style="font-size: 11px; color: #64748b; margin-top: 4px;"><a href="' . esc_url($secure_print_url) . '" style="color:#4f46e5; word-break:break-all;">' . esc_url($secure_print_url) . '</a></div>';
+        $message .= '</div>';
+
+        $message .= '<div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 12px; color: #047857;">';
+        $message .= '🔒 <strong>' . esc_html__('Presigned Secure Link', 'pod-customizer') . ':</strong> ' . sprintf(esc_html__('Signed link valid for 7 days (expires: %s). Access logged for security audit.', 'pod-customizer'), esc_html($expires_date));
+        $message .= '</div>';
+
         $message .= '</div>';
 
         // 4. Finished Mockup Preview

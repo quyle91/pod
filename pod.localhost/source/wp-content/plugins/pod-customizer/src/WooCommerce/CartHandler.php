@@ -148,7 +148,7 @@ class CartHandler implements HandlerInterface {
     public function customize_cart_item_thumbnail(string $thumbnail, array $cart_item, string $cart_item_key): string {
         if (!empty($cart_item[self::META_KEY_PREVIEW])) {
             return sprintf(
-                '<img src="%s" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail pod-cart-preview-thumb" alt="%s" style="object-fit:contain; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; width:80px; height:80px;" />',
+                '<img src="%s" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail pod-cart-preview-thumb" alt="%s" style="object-fit:contain; background:#f8fafc; border:1px solid #e2e8f0; width:80px; height:80px;" />',
                 esc_url($cart_item[self::META_KEY_PREVIEW]),
                 esc_attr__('Customized Design', 'pod-customizer')
             );

@@ -1,0 +1,212 @@
+# Copyright (C) 2026 quyle91 & Antigravity
+# This file is distributed under the same license as the POD Customizer & Print Ready Engine plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: POD Customizer & Print Ready Engine 1.0.0\n"
+"Report-Msgid-Bugs-To: https://pod.localhost\n"
+"POT-Creation-Date: 2026-09-17 09:20+0700\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Antigravity\n"
+"X-Domain: pod-customizer\n"
+
+#: pod-customizer.php:48
+msgid "POD Customizer requires WooCommerce to be installed and active."
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:80
+msgid "Base"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:83
+msgid "Text"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:86
+msgid "Clipart"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:89
+msgid "Photo"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:97
+msgid "Select Product Variant & Color"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:106
+msgid "Custom Text Lines"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:109
+#: src/Frontend/CustomizerAssets.php:150
+msgid "Add Text"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:120
+msgid "Clipart Layers"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:123
+#: src/Frontend/CustomizerAssets.php:151
+msgid "Add Clipart"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:134
+msgid "Photo Layers"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:137
+#: src/Frontend/CustomizerAssets.php:152
+msgid "Add Photo"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:152
+#: src/Frontend/CustomizerAssets.php:161
+msgid "Edit Text"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:157
+msgid "Text Content"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:158
+msgid "Enter your text..."
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:163
+msgid "Font Style"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:173
+msgid "Text Size"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:179
+msgid "Text Color"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:188
+msgid "Custom Color Picker"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:193
+#: src/Frontend/CustomizerAssets.php:154
+msgid "Done"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:202
+#: src/Frontend/CustomizerAssets.php:162
+msgid "Choose Clipart Graphic"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:217
+#: src/Frontend/CustomizerAssets.php:164
+msgid "Upload Personal Photo"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:223
+msgid "Click or drag & drop photo here"
+msgstr ""
+
+#: src/Frontend/CustomizerRenderer.php:224
+msgid "Supports PNG, JPG, WebP (Max 10MB)"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:147
+msgid "Edit"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:148
+msgid "Delete"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:149
+msgid "Change"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:153
+msgid "Reset"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:155
+msgid "Edit text"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:156
+msgid "Delete text"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:157
+msgid "Change clipart"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:158
+msgid "Delete clipart"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:159
+msgid "Change photo"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:160
+msgid "Delete photo"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:163
+msgid "Change Clipart Graphic"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:165
+msgid "Change Uploaded Photo"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:166
+msgid "No custom text lines added yet. Click \"Add Text\" to create one."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:167
+msgid "No clipart graphics on canvas. Click \"Add Clipart\" to select one."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:168
+msgid "No uploaded photos on canvas. Click \"Add Photo\" to upload."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:169
+msgid "Please add at least one customization (text, clipart, or photo) to your design."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:170
+msgid "Please enter custom text for your design."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:171
+msgid "Could not save custom design state. Please try again."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:172
+msgid "Please select a valid image file (JPG, PNG, WebP)."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:173
+msgid "Your Custom Text"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:174
+msgid "Uploaded Photo"
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:175
+msgid "Packaging design..."
+msgstr ""
+
+#: src/Frontend/CustomizerAssets.php:176
+msgid "Photo loaded successfully"
+msgstr ""
