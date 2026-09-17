@@ -11,6 +11,7 @@ import { addTextLayer, initTextEvents } from './text.js';
 import { initPhotoEvents } from './photo.js';
 import { onAddToCartSubmit } from './cart.js';
 import { initTemplateForm } from './form.js';
+import { initPreviewModal } from './preview.js';
 
 function init() {
   if (typeof window.podCustomizerConfig === 'undefined' || typeof window.fabric === 'undefined') {
@@ -19,6 +20,7 @@ function init() {
   }
 
   initCanvas();
+  initPreviewModal();
 
   if (config.template) {
     initTemplateMode();

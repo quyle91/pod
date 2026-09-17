@@ -102,12 +102,18 @@ class CustomizerRenderer implements HandlerInterface {
                 <div class="pod-stage-container">
                     <div class="pod-canvas-wrapper" id="pod-canvas-wrapper">
                         <canvas id="pod-live-canvas" width="600" height="600"></canvas>
+                        <button type="button" class="pod-canvas-quick-preview" id="pod-btn-quick-preview" title="<?php esc_attr_e('Phóng to xem trước', 'pod-customizer'); ?>">
+                            🔍 <?php esc_html_e('Phóng to', 'pod-customizer'); ?>
+                        </button>
                         <div class="pod-canvas-loading" id="pod-canvas-loading">
                             <span class="pod-spinner"></span>
                             <span><?php esc_html_e('Loading studio...', 'pod-customizer'); ?></span>
                         </div>
                     </div>
                     <div class="pod-stage-actions">
+                        <button type="button" class="pod-btn-preview" id="pod-btn-preview" title="<?php esc_attr_e('Xem trước sản phẩm đầy đủ', 'pod-customizer'); ?>">
+                            🔍 <?php esc_html_e('Xem trước sản phẩm', 'pod-customizer'); ?>
+                        </button>
                         <span class="pod-canvas-hint">
                             <?php echo $is_template_mode ? esc_html__('Tip: Fill in the options on the right to customize your live preview', 'pod-customizer') : esc_html__('Tip: Click on elements on canvas to drag or resize', 'pod-customizer'); ?>
                         </span>
@@ -282,6 +288,35 @@ class CustomizerRenderer implements HandlerInterface {
                             <span class="pod-upload-meta"><?php esc_html_e('Supports PNG, JPG, WebP (Max 10MB)', 'pod-customizer'); ?></span>
                             <input type="file" id="pod-file-input" accept="image/png, image/jpeg, image/webp" class="pod-file-hidden" multiple>
                         </div>
+                    </div>
+            </div>
+
+            <!-- Modal Popup for Product Full Preview -->
+            <div class="pod-modal-backdrop" id="pod-preview-modal" style="display:none;">
+                <div class="pod-modal-dialog pod-preview-modal-dialog">
+                    <div class="pod-modal-header">
+                        <div class="pod-preview-header-title">
+                            <span class="pod-preview-header-icon">👁️</span>
+                            <h4 class="pod-modal-title"><?php esc_html_e('Xem trước sản phẩm thực tế', 'pod-customizer'); ?></h4>
+                        </div>
+                        <button type="button" class="pod-modal-close" id="pod-preview-modal-btn-close">✕</button>
+                    </div>
+                    <div class="pod-modal-body pod-preview-modal-body">
+                        <div class="pod-preview-image-wrapper">
+                            <img id="pod-preview-modal-img" src="" alt="<?php esc_attr_e('Product Live Preview', 'pod-customizer'); ?>" class="pod-preview-modal-img" />
+                            <div class="pod-preview-badge-overlay">
+                                <span>✨ High-Res Live Render</span>
+                            </div>
+                        </div>
+                        <div class="pod-preview-specs" id="pod-preview-specs">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                    <div class="pod-modal-footer pod-preview-modal-footer">
+                        <span class="pod-preview-footer-tip"><?php esc_html_e('💡 Hình ảnh xem trước mô phỏng trực tiếp sản phẩm in thực tế.', 'pod-customizer'); ?></span>
+                        <button type="button" class="pod-btn-modal-done" id="pod-preview-modal-btn-done">
+                            <?php esc_html_e('Đóng lại', 'pod-customizer'); ?>
+                        </button>
                     </div>
                 </div>
             </div>

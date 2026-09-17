@@ -3,6 +3,7 @@
   var config = window.podCustomizerConfig || {};
   var fabric = window.fabric;
   var template = config.template || null;
+  var isTemplateMode = !!template;
   var templateValues = {};
   var templateMetrics = {};
   if (template && Array.isArray(template.fields)) {
@@ -56,6 +57,14 @@
     photoModalBtnClose: document.getElementById("pod-photo-modal-btn-close"),
     fileInput: document.getElementById("pod-file-input"),
     dropzone: document.getElementById("pod-upload-dropzone"),
+    // Preview Modal & Buttons
+    btnPreview: document.getElementById("pod-btn-preview"),
+    btnQuickPreview: document.getElementById("pod-btn-quick-preview"),
+    previewModal: document.getElementById("pod-preview-modal"),
+    previewModalImg: document.getElementById("pod-preview-modal-img"),
+    previewModalSpecs: document.getElementById("pod-preview-specs"),
+    previewModalBtnClose: document.getElementById("pod-preview-modal-btn-close"),
+    previewModalBtnDone: document.getElementById("pod-preview-modal-btn-done"),
     // Form & Reset
     btnReset: document.getElementById("pod-btn-reset"),
     stateInput: document.getElementById("pod_canvas_state"),
@@ -1297,6 +1306,88 @@
     parent.appendChild(stepper);
   }
 
+  // assets/js/src/preview.js
+  function openPreviewModal() {
+    if (!state.canvas || !elements.previewModal) return;
+    try {
+      const dataUrl = state.canvas.toDataURL({
+        format: "png",
+        multiplier: 2,
+        // 1200 x 1200 high-res crisp render
+        quality: 1
+      });
+      if (elements.previewModalImg) {
+        elements.previewModalImg.src = dataUrl;
+      }
+    } catch (err) {
+      console.error("[POD Preview] Failed to export canvas image:", err);
+    }
+    if (elements.previewModalSpecs) {
+      elements.previewModalSpecs.innerHTML = "";
+      const tpl = config.template;
+      if (isTemplateMode && tpl && Array.isArray(tpl.fields)) {
+        tpl.fields.forEach((field) => {
+          const val = state.templateValues ? state.templateValues[field.id] : field.default_value;
+          if (val !== void 0 && String(val).trim() !== "") {
+            const pill = document.createElement("span");
+            pill.className = "pod-preview-spec-pill";
+            let displayVal = String(val);
+            if (field.type === "repeater_counter") {
+              displayVal = `${val} items`;
+            } else if (field.type === "preset_picker") {
+              const opt = (field.options || []).find((o) => o.id === val);
+              displayVal = opt ? opt.label || opt.id : val;
+            }
+            pill.innerHTML = `<strong>${field.label || field.id}:</strong> ${displayVal}`;
+            elements.previewModalSpecs.appendChild(pill);
+          }
+        });
+        elements.previewModalSpecs.style.display = elements.previewModalSpecs.children.length ? "flex" : "none";
+      } else {
+        elements.previewModalSpecs.style.display = "none";
+      }
+    }
+    elements.previewModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+  function closePreviewModal() {
+    if (!elements.previewModal) return;
+    elements.previewModal.style.display = "none";
+    document.body.style.overflow = "";
+  }
+  function initPreviewModal() {
+    if (elements.btnPreview) {
+      elements.btnPreview.addEventListener("click", (e) => {
+        e.preventDefault();
+        openPreviewModal();
+      });
+    }
+    if (elements.btnQuickPreview) {
+      elements.btnQuickPreview.addEventListener("click", (e) => {
+        e.preventDefault();
+        openPreviewModal();
+      });
+    }
+    if (elements.previewModalBtnClose) {
+      elements.previewModalBtnClose.addEventListener("click", closePreviewModal);
+    }
+    if (elements.previewModalBtnDone) {
+      elements.previewModalBtnDone.addEventListener("click", closePreviewModal);
+    }
+    if (elements.previewModal) {
+      elements.previewModal.addEventListener("click", (e) => {
+        if (e.target === elements.previewModal) {
+          closePreviewModal();
+        }
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && elements.previewModal && elements.previewModal.style.display === "flex") {
+        closePreviewModal();
+      }
+    });
+  }
+
   // assets/js/src/main.js
   function init() {
     if (typeof window.podCustomizerConfig === "undefined" || typeof window.fabric === "undefined") {
@@ -1304,6 +1395,7 @@
       return;
     }
     initCanvas();
+    initPreviewModal();
     if (config.template) {
       initTemplateMode();
     } else {

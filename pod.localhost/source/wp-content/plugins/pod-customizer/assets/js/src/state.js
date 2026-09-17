@@ -69,6 +69,15 @@ export const elements = {
   fileInput: document.getElementById('pod-file-input'),
   dropzone: document.getElementById('pod-upload-dropzone'),
 
+  // Preview Modal & Buttons
+  btnPreview: document.getElementById('pod-btn-preview'),
+  btnQuickPreview: document.getElementById('pod-btn-quick-preview'),
+  previewModal: document.getElementById('pod-preview-modal'),
+  previewModalImg: document.getElementById('pod-preview-modal-img'),
+  previewModalSpecs: document.getElementById('pod-preview-specs'),
+  previewModalBtnClose: document.getElementById('pod-preview-modal-btn-close'),
+  previewModalBtnDone: document.getElementById('pod-preview-modal-btn-done'),
+
   // Form & Reset
   btnReset: document.getElementById('pod-btn-reset'),
   stateInput: document.getElementById('pod_canvas_state'),
