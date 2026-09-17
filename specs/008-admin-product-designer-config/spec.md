@@ -4,7 +4,20 @@
 **Status**: `APPROVED_FOR_POC`  
 **Created At**: 2026-09-17  
 **Last Updated**: 2026-09-17  
-**Reference Document**: [`.specify/template_personalization_requirements.md`](../../.specify/template_personalization_requirements.md)
+**Reference Document**: [`.specify/template_personalization_requirements.md`](../../.specify/template_personalization_requirements.md)  
+
+---
+
+## 🔗 Quick Test Links (Đường dẫn Test Trực tiếp)
+
+- 🎂 **Template 03 (Cốc Sinh Nhật - Repeater Nến + Auto-Shrink + Chọn Icon)**:  
+  [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_03](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_03)
+- 👕 **Template 01 (Áo Thun - Chữ Auto-Fit + Slogan Xoay Góc -8°)**:  
+  [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_01](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_01)
+- ☕ **Template 02 (Cốc Sứ - Bảng chọn biểu tượng Preset Icon + Tên riêng)**:  
+  [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_02](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_02)
+- 🛠️ **Sharp 300 DPI Studio & QA Tool (Backend Render)**:  
+  [http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456](http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456)
 
 ---
 

@@ -5,6 +5,19 @@
 
 ---
 
+## 🔗 Quick Test Links (Đường dẫn Test Trực tiếp)
+
+| Template | Tên Mẫu & Tính Năng | Đường Dẫn Trực Tiếp |
+| :--- | :--- | :--- |
+| **Template 03** | 🎂 **Cốc Sinh Nhật**: Repeater nến (1-18 tuổi), Auto-Shrink tên, Cursive text, Icon Picker | [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_03](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_03) |
+| **Template 01** | 👕 **Áo Thun Slogan**: Auto-Fit Text chữ dài, Slogan xoay nghiêng -8° | [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_01](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_01) |
+| **Template 02** | ☕ **Cốc Sứ Biểu Tượng**: Bảng chọn Icon Swatches (Vương miện, Ngôi sao, Tim...), Tên riêng | [http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_02](http://pod.localhost/product/happy-ninja-2/?pod_tpl=tpl_02) |
+| **Render Studio** | 🛠️ **Sharp 300 DPI Studio & QA Tool** (Kiểm tra render backend) | [http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456](http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456) |
+
+> 💡 *Mẹo: Bạn có thể gắn `?pod_tpl=tpl_01` (hoặc `tpl_02`, `tpl_03`) vào bất kỳ link sản phẩm nào trên web, ví dụ: `http://pod.localhost/product/patient-ninja/?pod_tpl=tpl_03`.*
+
+---
+
 ## Task Matrix & Checklist
 
 ### Phase 1: Template Catalog & Schemas (Bộ sưu tập Template Mẫu & Định nghĩa Dữ liệu)
