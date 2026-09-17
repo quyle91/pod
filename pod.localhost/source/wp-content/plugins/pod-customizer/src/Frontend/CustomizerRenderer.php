@@ -56,9 +56,9 @@ class CustomizerRenderer implements HandlerInterface {
                     <div class="pod-admin-bar-top">
                         <div class="pod-admin-bar-title">
                             <span class="pod-admin-badge">👑 Admin Switcher</span>
-                            <span class="pod-admin-desc"><?php esc_html_e('Chuyển đổi nhanh mẫu Template POD (Chỉ hiển thị với Administrator):', 'pod-customizer'); ?></span>
+                            <span class="pod-admin-desc"><?php esc_html_e('Quick Template Switcher (Visible to Administrators only):', 'pod-customizer'); ?></span>
                         </div>
-                        <a href="http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456" target="_blank" class="pod-admin-qa-link" title="<?php esc_attr_e('Mở công cụ Sharp Render Studio 300 DPI', 'pod-customizer'); ?>">
+                        <a href="http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456" target="_blank" class="pod-admin-qa-link" title="<?php esc_attr_e('Open Sharp 300 DPI Studio', 'pod-customizer'); ?>">
                             🛠️ <?php esc_html_e('Sharp 300 DPI Studio', 'pod-customizer'); ?> ↗
                         </a>
                     </div>
@@ -102,8 +102,8 @@ class CustomizerRenderer implements HandlerInterface {
                 <div class="pod-stage-container">
                     <div class="pod-canvas-wrapper" id="pod-canvas-wrapper">
                         <canvas id="pod-live-canvas" width="600" height="600"></canvas>
-                        <button type="button" class="pod-canvas-quick-preview" id="pod-btn-quick-preview" title="<?php esc_attr_e('Phóng to xem trước', 'pod-customizer'); ?>">
-                            🔍 <?php esc_html_e('Phóng to', 'pod-customizer'); ?>
+                        <button type="button" class="pod-canvas-quick-preview" id="pod-btn-quick-preview" title="<?php esc_attr_e('Zoom Preview', 'pod-customizer'); ?>">
+                            🔍 <?php esc_html_e('Zoom', 'pod-customizer'); ?>
                         </button>
                         <div class="pod-canvas-loading" id="pod-canvas-loading">
                             <span class="pod-spinner"></span>
@@ -111,8 +111,8 @@ class CustomizerRenderer implements HandlerInterface {
                         </div>
                     </div>
                     <div class="pod-stage-actions">
-                        <button type="button" class="pod-btn-preview" id="pod-btn-preview" title="<?php esc_attr_e('Xem trước sản phẩm đầy đủ', 'pod-customizer'); ?>">
-                            🔍 <?php esc_html_e('Xem trước sản phẩm', 'pod-customizer'); ?>
+                        <button type="button" class="pod-btn-preview" id="pod-btn-preview" title="<?php esc_attr_e('Preview Full Product', 'pod-customizer'); ?>">
+                            🔍 <?php esc_html_e('Preview Product', 'pod-customizer'); ?>
                         </button>
                         <span class="pod-canvas-hint">
                             <?php echo $is_template_mode ? esc_html__('Tip: Fill in the options on the right to customize your live preview', 'pod-customizer') : esc_html__('Tip: Click on elements on canvas to drag or resize', 'pod-customizer'); ?>
@@ -297,7 +297,7 @@ class CustomizerRenderer implements HandlerInterface {
                     <div class="pod-modal-header">
                         <div class="pod-preview-header-title">
                             <span class="pod-preview-header-icon">👁️</span>
-                            <h4 class="pod-modal-title"><?php esc_html_e('Xem trước sản phẩm thực tế', 'pod-customizer'); ?></h4>
+                            <h4 class="pod-modal-title"><?php esc_html_e('Live Product Preview', 'pod-customizer'); ?></h4>
                         </div>
                         <button type="button" class="pod-modal-close" id="pod-preview-modal-btn-close">✕</button>
                     </div>
@@ -313,9 +313,9 @@ class CustomizerRenderer implements HandlerInterface {
                         </div>
                     </div>
                     <div class="pod-modal-footer pod-preview-modal-footer">
-                        <span class="pod-preview-footer-tip"><?php esc_html_e('💡 Hình ảnh xem trước mô phỏng trực tiếp sản phẩm in thực tế.', 'pod-customizer'); ?></span>
+                        <span class="pod-preview-footer-tip"><?php esc_html_e('💡 High-resolution realistic simulation of the final customized product.', 'pod-customizer'); ?></span>
                         <button type="button" class="pod-btn-modal-done" id="pod-preview-modal-btn-done">
-                            <?php esc_html_e('Đóng lại', 'pod-customizer'); ?>
+                            <?php esc_html_e('Close', 'pod-customizer'); ?>
                         </button>
                     </div>
                 </div>

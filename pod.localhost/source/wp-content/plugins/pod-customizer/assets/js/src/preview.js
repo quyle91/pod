@@ -3,29 +3,36 @@
  * Generates crisp 2x resolution snapshot from Fabric Canvas and displays interactive popup.
  */
 
-import { state, elements, config, isTemplateMode } from './state.js';
+import { state, config, isTemplateMode } from './state.js';
 
 export function openPreviewModal() {
-  if (!state.canvas || !elements.previewModal) return;
+  const modal = document.getElementById('pod-preview-modal');
+  const img = document.getElementById('pod-preview-modal-img');
+  const specs = document.getElementById('pod-preview-specs');
 
-  // 1. Generate high-resolution render snapshot from canvas
+  if (!state.canvas || !modal) {
+    console.warn('[POD Preview] Canvas or modal not available yet.');
+    return;
+  }
+
+  // 1. Generate high-resolution render snapshot from canvas (1200 x 1200 px @ 2x)
   try {
     const dataUrl = state.canvas.toDataURL({
       format: 'png',
-      multiplier: 2, // 1200 x 1200 high-res crisp render
+      multiplier: 2,
       quality: 1,
     });
 
-    if (elements.previewModalImg) {
-      elements.previewModalImg.src = dataUrl;
+    if (img) {
+      img.src = dataUrl;
     }
   } catch (err) {
-    console.error('[POD Preview] Failed to export canvas image:', err);
+    console.error('[POD Preview] Failed to export canvas snapshot:', err);
   }
 
-  // 2. Render summary of customized specs if in template mode
-  if (elements.previewModalSpecs) {
-    elements.previewModalSpecs.innerHTML = '';
+  // 2. Render summary of customized specs if in template mode (Pure English)
+  if (specs) {
+    specs.innerHTML = '';
     const tpl = config.template;
 
     if (isTemplateMode && tpl && Array.isArray(tpl.fields)) {
@@ -42,62 +49,69 @@ export function openPreviewModal() {
             displayVal = opt ? (opt.label || opt.id) : val;
           }
           pill.innerHTML = `<strong>${field.label || field.id}:</strong> ${displayVal}`;
-          elements.previewModalSpecs.appendChild(pill);
+          specs.appendChild(pill);
         }
       });
-      elements.previewModalSpecs.style.display = elements.previewModalSpecs.children.length ? 'flex' : 'none';
+      specs.style.display = specs.children.length ? 'flex' : 'none';
     } else {
-      elements.previewModalSpecs.style.display = 'none';
+      specs.style.display = 'none';
     }
   }
 
   // 3. Display modal
-  elements.previewModal.style.display = 'flex';
+  modal.style.display = 'flex';
+  modal.classList.add('is-open');
   document.body.style.overflow = 'hidden';
 }
 
 export function closePreviewModal() {
-  if (!elements.previewModal) return;
-  elements.previewModal.style.display = 'none';
+  const modal = document.getElementById('pod-preview-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  modal.classList.remove('is-open');
   document.body.style.overflow = '';
 }
 
+// Global debug exposure
+if (typeof window !== 'undefined') {
+  window.podOpenPreview = openPreviewModal;
+  window.podClosePreview = closePreviewModal;
+}
+
 export function initPreviewModal() {
-  // Trigger buttons
-  if (elements.btnPreview) {
-    elements.btnPreview.addEventListener('click', (e) => {
+  // Use robust document-level delegation so clicks work regardless of load timing
+  document.addEventListener('click', (e) => {
+    // 1. Preview button clicked
+    const previewTrigger = e.target.closest('#pod-btn-preview, #pod-btn-quick-preview');
+    if (previewTrigger) {
       e.preventDefault();
+      e.stopPropagation();
       openPreviewModal();
-    });
-  }
+      return;
+    }
 
-  if (elements.btnQuickPreview) {
-    elements.btnQuickPreview.addEventListener('click', (e) => {
+    // 2. Close button clicked
+    const closeTrigger = e.target.closest('#pod-preview-modal-btn-close, #pod-preview-modal-btn-done');
+    if (closeTrigger) {
       e.preventDefault();
-      openPreviewModal();
-    });
-  }
+      e.stopPropagation();
+      closePreviewModal();
+      return;
+    }
 
-  // Close triggers
-  if (elements.previewModalBtnClose) {
-    elements.previewModalBtnClose.addEventListener('click', closePreviewModal);
-  }
-
-  if (elements.previewModalBtnDone) {
-    elements.previewModalBtnDone.addEventListener('click', closePreviewModal);
-  }
-
-  if (elements.previewModal) {
-    elements.previewModal.addEventListener('click', (e) => {
-      if (e.target === elements.previewModal) {
-        closePreviewModal();
-      }
-    });
-  }
+    // 3. Click backdrop outside dialog
+    const modal = document.getElementById('pod-preview-modal');
+    if (modal && e.target === modal) {
+      closePreviewModal();
+    }
+  });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && elements.previewModal && elements.previewModal.style.display === 'flex') {
-      closePreviewModal();
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('pod-preview-modal');
+      if (modal && modal.style.display === 'flex') {
+        closePreviewModal();
+      }
     }
   });
 }

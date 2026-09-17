@@ -168,6 +168,7 @@ function renderTextSlot(field, value, scale) {
     evented: false,
     podType: 'text',
     podFieldId: field.id,
+    textBaseline: 'alphabetic',
   });
 
   // Calculate Auto-Shrink

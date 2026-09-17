@@ -30,6 +30,7 @@ export function addTextLayer(initialText, openModalNow = true) {
     cornerStrokeColor: '#ffffff',
     cornerSize: 9,
     transparentCorners: false,
+    textBaseline: 'alphabetic',
   });
 
   state.canvas.add(textObj);

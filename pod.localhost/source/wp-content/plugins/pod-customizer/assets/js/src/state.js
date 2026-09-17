@@ -5,6 +5,13 @@
 export const config = window.podCustomizerConfig || {};
 export const fabric = window.fabric;
 
+// Patch Fabric.js 5.3.0 CanvasTextBaseline invalid enum 'alphabetical' -> 'alphabetic'
+if (fabric) {
+  if (fabric.Text) fabric.Text.prototype.textBaseline = 'alphabetic';
+  if (fabric.IText) fabric.IText.prototype.textBaseline = 'alphabetic';
+  if (fabric.Textbox) fabric.Textbox.prototype.textBaseline = 'alphabetic';
+}
+
 export const template = config.template || null;
 export const isTemplateMode = !!template;
 export const templateValues = {};
