@@ -5,7 +5,7 @@
   "product_title": "Custom Birthday Milestone Mug",
   "print_spec": {
     "width_px": 2400,
-    "height_px": 1050,
+    "height_px": 2400,
     "dpi": 300
   },
   "mockup": {
@@ -13,9 +13,9 @@
     "name": "Ceramic Mug",
     "url": "assets/mockups/mug-white.svg",
     "bounds": {
-      "x": 300,
-      "y": 180,
-      "width": 1800,
+      "x": 840,
+      "y": 880,
+      "width": 560,
       "height": 720
     }
   },
@@ -27,7 +27,7 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 300,
+        "y": 980,
         "width_px": 90,
         "height_px": 75
       },
@@ -63,9 +63,9 @@
       },
       "container_bounds": {
         "x": 1200,
-        "y": 420,
-        "max_width_px": 720,
-        "gap_px": 14,
+        "y": 1100,
+        "max_width_px": 520,
+        "gap_px": 12,
         "distribution": "horizontal_center"
       }
     },
@@ -77,16 +77,16 @@
       "default_value": "Nam Anh",
       "position": {
         "x": 1200,
-        "y": 550
+        "y": 1240
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 68,
-        "min_font_size_px": 22,
+        "font_size_px": 60,
+        "min_font_size_px": 20,
         "color": "#1e293b",
         "align": "center",
-        "max_width_px": 800,
+        "max_width_px": 560,
         "rotation": 0
       }
     },
@@ -98,16 +98,16 @@
       "default_value": "Happy Birthday!",
       "position": {
         "x": 1200,
-        "y": 640
+        "y": 1360
       },
       "style": {
         "font_family": "Dancing Script",
         "font_weight": "600",
-        "font_size_px": 44,
+        "font_size_px": 42,
         "min_font_size_px": 18,
         "color": "#ec4899",
         "align": "center",
-        "max_width_px": 750,
+        "max_width_px": 540,
         "rotation": 0
       }
     }

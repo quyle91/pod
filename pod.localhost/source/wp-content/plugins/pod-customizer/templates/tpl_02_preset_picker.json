@@ -5,7 +5,7 @@
   "product_title": "Personalized Badge Coffee Mug",
   "print_spec": {
     "width_px": 2400,
-    "height_px": 1050,
+    "height_px": 2400,
     "dpi": 300
   },
   "mockup": {
@@ -13,9 +13,9 @@
     "name": "Ceramic Mug",
     "url": "assets/mockups/mug-white.svg",
     "bounds": {
-      "x": 300,
-      "y": 180,
-      "width": 1800,
+      "x": 840,
+      "y": 880,
+      "width": 560,
       "height": 720
     }
   },
@@ -27,7 +27,7 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 380,
+        "y": 1040,
         "width_px": 120,
         "height_px": 100
       },
@@ -67,16 +67,16 @@
       "default_value": "Jessica",
       "position": {
         "x": 1200,
-        "y": 560
+        "y": 1220
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 72,
-        "min_font_size_px": 24,
+        "font_size_px": 66,
+        "min_font_size_px": 22,
         "color": "#1e293b",
         "align": "center",
-        "max_width_px": 900,
+        "max_width_px": 560,
         "rotation": 0
       }
     },
@@ -88,7 +88,7 @@
       "default_value": "BEST BOSS EVER",
       "position": {
         "x": 1200,
-        "y": 660
+        "y": 1360
       },
       "style": {
         "font_family": "Oswald",
@@ -97,7 +97,7 @@
         "min_font_size_px": 18,
         "color": "#e11d48",
         "align": "center",
-        "max_width_px": 800,
+        "max_width_px": 540,
         "rotation": 0
       }
     }

@@ -199,6 +199,11 @@ function renderTextSlot(field, value, scale) {
 }
 
 /**
+ * Image Cache for instant repeater and preset rendering without re-fetching
+ */
+const templateImageCache = {};
+
+/**
  * 2. Preset Icon Picker Slot
  */
 function renderPresetImageSlot(field, value, scale) {
@@ -211,16 +216,13 @@ function renderPresetImageSlot(field, value, scale) {
   const targetW = (field.position.width_px || 100) * scale;
   const targetH = (field.position.height_px || 100) * scale;
 
-  // Remove previous
-  if (state.templateObjects[field.id]) {
-    state.canvas.remove(state.templateObjects[field.id]);
-    delete state.templateObjects[field.id];
-  }
+  function applyPresetImage(imgElement) {
+    if (state.templateObjects[field.id]) {
+      state.canvas.remove(state.templateObjects[field.id]);
+      delete state.templateObjects[field.id];
+    }
 
-  fabric.loadSVGFromURL(option.url, (objects, options) => {
-    if (!objects || !objects.length) return;
-    const svgObj = fabric.util.groupSVGElements(objects, options);
-    svgObj.set({
+    const svgObj = new fabric.Image(imgElement, {
       left: x,
       top: y,
       originX: 'center',
@@ -243,11 +245,27 @@ function renderPresetImageSlot(field, value, scale) {
     state.canvas.bringToFront(svgObj);
     state.canvas.renderAll();
     syncStateToForm();
-  });
+  }
+
+  if (templateImageCache[option.url]) {
+    applyPresetImage(templateImageCache[option.url]);
+  } else {
+    fabric.Image.fromURL(
+      option.url,
+      (img) => {
+        if (!img) return;
+        const elem = img.getElement();
+        templateImageCache[option.url] = elem;
+        applyPresetImage(elem);
+      },
+      { crossOrigin: 'anonymous' }
+    );
+  }
 }
 
 /**
  * 3. Dynamic Repeater Counter Slot (e.g. Birthday Candles)
+ * Renders exactly `count` independent fabric.Image instances centered horizontally.
  */
 function renderRepeaterSlot(field, value, scale) {
   const min = field.min !== undefined ? field.min : 1;
@@ -265,23 +283,21 @@ function renderRepeaterSlot(field, value, scale) {
   let itemH = (subImg.height_px || 64) * scale;
   let baseGap = (container.gap_px || 12) * scale;
 
-  // Remove previous repeater items
-  if (state.templateObjects[field.id]) {
-    if (Array.isArray(state.templateObjects[field.id])) {
-      state.templateObjects[field.id].forEach((obj) => state.canvas.remove(obj));
-    } else {
-      state.canvas.remove(state.templateObjects[field.id]);
-    }
-    state.templateObjects[field.id] = [];
-  }
-
   const url = subImg.url;
   if (!url) return;
 
-  fabric.loadSVGFromURL(url, (objects, options) => {
-    if (!objects || !objects.length) return;
+  function buildRepeaterItems(imgElement) {
+    // 1. Remove previous repeater items
+    if (state.templateObjects[field.id]) {
+      if (Array.isArray(state.templateObjects[field.id])) {
+        state.templateObjects[field.id].forEach((obj) => state.canvas.remove(obj));
+      } else {
+        state.canvas.remove(state.templateObjects[field.id]);
+      }
+      state.templateObjects[field.id] = [];
+    }
 
-    // Calculate spacing
+    // 2. Calculate dynamic responsive spacing & scaling
     let gap = baseGap;
     let totalW = count * itemW + (count - 1) * gap;
 
@@ -301,10 +317,10 @@ function renderRepeaterSlot(field, value, scale) {
     const startX = centerX - totalW / 2 + itemW / 2;
     const createdObjs = [];
 
+    // 3. Create independent fabric.Image for each item (no shared group mutation)
     for (let i = 0; i < count; i++) {
       const posX = startX + i * (itemW + gap);
-      const itemObj = fabric.util.groupSVGElements(objects, options);
-      itemObj.set({
+      const itemObj = new fabric.Image(imgElement, {
         left: posX,
         top: centerY,
         originX: 'center',
@@ -312,7 +328,7 @@ function renderRepeaterSlot(field, value, scale) {
         selectable: false,
         evented: false,
         podType: 'clipart',
-        clipartName: 'Repeater Item',
+        clipartName: `Repeater Item ${i + 1}`,
         clipartUrl: url,
         podFieldId: field.id,
       });
@@ -328,6 +344,21 @@ function renderRepeaterSlot(field, value, scale) {
     state.templateObjects[field.id] = createdObjs;
     state.canvas.renderAll();
     syncStateToForm();
-  });
+  }
+
+  if (templateImageCache[url]) {
+    buildRepeaterItems(templateImageCache[url]);
+  } else {
+    fabric.Image.fromURL(
+      url,
+      (img) => {
+        if (!img) return;
+        const elem = img.getElement();
+        templateImageCache[url] = elem;
+        buildRepeaterItems(elem);
+      },
+      { crossOrigin: 'anonymous' }
+    );
+  }
 }
 
