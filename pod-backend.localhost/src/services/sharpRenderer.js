@@ -90,6 +90,8 @@ class SharpRenderer {
                 const printFontSize = Math.round((parseFloat(layer.fontSize) || 24) * scaleX);
                 lines.push(`  - Custom Text      : "${layer.text || ''}"`);
                 lines.push(`  - Font Family      : ${layer.fontFamily || 'Roboto'}`);
+                lines.push(`  - Font Weight      : ${layer.fontWeight || 'normal'}`);
+                lines.push(`  - Font Style       : ${layer.fontStyle || 'normal'}`);
                 lines.push(`  - Font Size        : ${layer.fontSize || 24} pt (Print Size: ${printFontSize} px @ 300 DPI)`);
                 lines.push(`  - Text Color       : ${layer.fill || '#000000'}`);
                 lines.push(`  - Text Alignment   : ${layer.textAlign || 'center'}`);
@@ -308,7 +310,16 @@ class SharpRenderer {
                     return `<text x="${centerX}" y="${lineY}" transform="rotate(${rotation}, ${centerX}, ${centerY})" class="pod-text">${this.escapeXml(line)}</text>`;
                 }).join('\n');
 
-                const fontWeight = layer.fontWeight || (layer.fontStyle === 'bold' ? 'bold' : 'normal');
+                const fontStyle = layer.fontStyle || (layer.font_style || 'normal');
+                let fontWeight = layer.fontWeight || layer.font_weight;
+                if (!fontWeight) {
+                    // Smart fallback for existing orders: template text or styled fonts default to 700 bold
+                    if (payload.template_payload || ['Montserrat', 'Oswald'].includes(layer.fontFamily)) {
+                        fontWeight = '700';
+                    } else {
+                        fontWeight = fontStyle === 'bold' ? 'bold' : 'normal';
+                    }
+                }
 
                 const svgText = `
                 <svg width="${targetWidth}" height="${targetHeight}" viewBox="0 0 ${targetWidth} ${targetHeight}" xmlns="http://www.w3.org/2000/svg">
@@ -317,6 +328,7 @@ class SharpRenderer {
                             font-family: '${fontFamily}', 'Roboto', 'DejaVu Sans', sans-serif;
                             font-size: ${fontSize}px;
                             font-weight: ${fontWeight};
+                            font-style: ${fontStyle};
                             fill: ${fill};
                             text-anchor: ${textAnchor};
                             dominant-baseline: central;

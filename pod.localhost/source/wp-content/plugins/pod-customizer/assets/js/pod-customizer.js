@@ -186,6 +186,8 @@
             text: obj.text || "",
             fontFamily: obj.fontFamily || "Roboto",
             fontSize: Math.round((obj.fontSize || 44) * (obj.scaleY || 1) * SCALE_RATIO),
+            fontWeight: obj.fontWeight || "normal",
+            fontStyle: obj.fontStyle || "normal",
             fill: obj.fill || "#111827",
             textAlign: obj.textAlign || "center",
             x: Math.round(obj.left * SCALE_RATIO),
