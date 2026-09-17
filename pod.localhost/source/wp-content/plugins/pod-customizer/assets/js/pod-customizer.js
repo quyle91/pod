@@ -1315,11 +1315,18 @@
 
   // assets/js/src/preview.js
   function openPreviewModal() {
+    console.log("[POD Customizer] \u{1F50D} openPreviewModal() invoked.");
     const modal = document.getElementById("pod-preview-modal");
     const img = document.getElementById("pod-preview-modal-img");
     const specs = document.getElementById("pod-preview-specs");
+    console.log("[POD Customizer] Element status check:", {
+      hasCanvas: !!state.canvas,
+      hasModal: !!modal,
+      hasImg: !!img,
+      isTemplateMode
+    });
     if (!state.canvas || !modal) {
-      console.warn("[POD Preview] Canvas or modal not available yet.");
+      console.error("[POD Customizer] \u274C Cannot open modal: canvas or modal element missing from DOM!");
       return;
     }
     try {
@@ -1328,11 +1335,12 @@
         multiplier: 2,
         quality: 1
       });
+      console.log("[POD Customizer] \u2705 Canvas snapshot generated. Data length:", dataUrl.length);
       if (img) {
         img.src = dataUrl;
       }
     } catch (err) {
-      console.error("[POD Preview] Failed to export canvas snapshot:", err);
+      console.error("[POD Customizer] \u274C Failed to export canvas snapshot:", err);
     }
     if (specs) {
       specs.innerHTML = "";
@@ -1362,8 +1370,10 @@
     modal.style.display = "flex";
     modal.classList.add("is-open");
     document.body.style.overflow = "hidden";
+    console.log("[POD Customizer] \u{1F680} Preview modal displayed successfully!");
   }
   function closePreviewModal() {
+    console.log("[POD Customizer] \u{1F512} closePreviewModal() invoked.");
     const modal = document.getElementById("pod-preview-modal");
     if (!modal) return;
     modal.style.display = "none";
@@ -1375,9 +1385,26 @@
     window.podClosePreview = closePreviewModal;
   }
   function initPreviewModal() {
+    console.log("[POD Customizer] \u{1F6E0}\uFE0F initPreviewModal() setting up listeners.");
+    const checkElements = () => {
+      const btn = document.getElementById("pod-btn-preview");
+      const quickBtn = document.getElementById("pod-btn-quick-preview");
+      const modal = document.getElementById("pod-preview-modal");
+      console.log("[POD Customizer] Preview elements found in DOM:", {
+        btnPreview: btn,
+        btnQuickPreview: quickBtn,
+        previewModal: modal
+      });
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", checkElements);
+    } else {
+      checkElements();
+    }
     document.addEventListener("click", (e) => {
       const previewTrigger = e.target.closest("#pod-btn-preview, #pod-btn-quick-preview");
       if (previewTrigger) {
+        console.log("[POD Customizer] \u{1F5B1}\uFE0F Click detected on Preview Trigger:", previewTrigger.id, e.target);
         e.preventDefault();
         e.stopPropagation();
         openPreviewModal();
@@ -1385,6 +1412,7 @@
       }
       const closeTrigger = e.target.closest("#pod-preview-modal-btn-close, #pod-preview-modal-btn-done");
       if (closeTrigger) {
+        console.log("[POD Customizer] \u{1F5B1}\uFE0F Click detected on Close Button:", closeTrigger.id);
         e.preventDefault();
         e.stopPropagation();
         closePreviewModal();
@@ -1392,6 +1420,7 @@
       }
       const modal = document.getElementById("pod-preview-modal");
       if (modal && e.target === modal) {
+        console.log("[POD Customizer] \u{1F5B1}\uFE0F Click detected on Modal Backdrop.");
         closePreviewModal();
       }
     });
@@ -1399,6 +1428,7 @@
       if (e.key === "Escape") {
         const modal = document.getElementById("pod-preview-modal");
         if (modal && modal.style.display === "flex") {
+          console.log("[POD Customizer] \u2328\uFE0F Escape key pressed. Closing modal.");
           closePreviewModal();
         }
       }

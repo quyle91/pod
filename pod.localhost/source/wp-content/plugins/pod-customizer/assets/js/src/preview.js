@@ -6,12 +6,20 @@
 import { state, config, isTemplateMode } from './state.js';
 
 export function openPreviewModal() {
+  console.log('[POD Customizer] 🔍 openPreviewModal() invoked.');
   const modal = document.getElementById('pod-preview-modal');
   const img = document.getElementById('pod-preview-modal-img');
   const specs = document.getElementById('pod-preview-specs');
 
+  console.log('[POD Customizer] Element status check:', {
+    hasCanvas: !!state.canvas,
+    hasModal: !!modal,
+    hasImg: !!img,
+    isTemplateMode: isTemplateMode,
+  });
+
   if (!state.canvas || !modal) {
-    console.warn('[POD Preview] Canvas or modal not available yet.');
+    console.error('[POD Customizer] ❌ Cannot open modal: canvas or modal element missing from DOM!');
     return;
   }
 
@@ -22,12 +30,13 @@ export function openPreviewModal() {
       multiplier: 2,
       quality: 1,
     });
+    console.log('[POD Customizer] ✅ Canvas snapshot generated. Data length:', dataUrl.length);
 
     if (img) {
       img.src = dataUrl;
     }
   } catch (err) {
-    console.error('[POD Preview] Failed to export canvas snapshot:', err);
+    console.error('[POD Customizer] ❌ Failed to export canvas snapshot:', err);
   }
 
   // 2. Render summary of customized specs if in template mode (Pure English)
@@ -62,9 +71,11 @@ export function openPreviewModal() {
   modal.style.display = 'flex';
   modal.classList.add('is-open');
   document.body.style.overflow = 'hidden';
+  console.log('[POD Customizer] 🚀 Preview modal displayed successfully!');
 }
 
 export function closePreviewModal() {
+  console.log('[POD Customizer] 🔒 closePreviewModal() invoked.');
   const modal = document.getElementById('pod-preview-modal');
   if (!modal) return;
   modal.style.display = 'none';
@@ -72,18 +83,38 @@ export function closePreviewModal() {
   document.body.style.overflow = '';
 }
 
-// Global debug exposure
+// Global debug exposure for testing in devtools console
 if (typeof window !== 'undefined') {
   window.podOpenPreview = openPreviewModal;
   window.podClosePreview = closePreviewModal;
 }
 
 export function initPreviewModal() {
-  // Use robust document-level delegation so clicks work regardless of load timing
+  console.log('[POD Customizer] 🛠️ initPreviewModal() setting up listeners.');
+
+  const checkElements = () => {
+    const btn = document.getElementById('pod-btn-preview');
+    const quickBtn = document.getElementById('pod-btn-quick-preview');
+    const modal = document.getElementById('pod-preview-modal');
+    console.log('[POD Customizer] Preview elements found in DOM:', {
+      btnPreview: btn,
+      btnQuickPreview: quickBtn,
+      previewModal: modal,
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkElements);
+  } else {
+    checkElements();
+  }
+
+  // Document-level delegation for clicks
   document.addEventListener('click', (e) => {
     // 1. Preview button clicked
     const previewTrigger = e.target.closest('#pod-btn-preview, #pod-btn-quick-preview');
     if (previewTrigger) {
+      console.log('[POD Customizer] 🖱️ Click detected on Preview Trigger:', previewTrigger.id, e.target);
       e.preventDefault();
       e.stopPropagation();
       openPreviewModal();
@@ -93,6 +124,7 @@ export function initPreviewModal() {
     // 2. Close button clicked
     const closeTrigger = e.target.closest('#pod-preview-modal-btn-close, #pod-preview-modal-btn-done');
     if (closeTrigger) {
+      console.log('[POD Customizer] 🖱️ Click detected on Close Button:', closeTrigger.id);
       e.preventDefault();
       e.stopPropagation();
       closePreviewModal();
@@ -102,6 +134,7 @@ export function initPreviewModal() {
     // 3. Click backdrop outside dialog
     const modal = document.getElementById('pod-preview-modal');
     if (modal && e.target === modal) {
+      console.log('[POD Customizer] 🖱️ Click detected on Modal Backdrop.');
       closePreviewModal();
     }
   });
@@ -110,6 +143,7 @@ export function initPreviewModal() {
     if (e.key === 'Escape') {
       const modal = document.getElementById('pod-preview-modal');
       if (modal && modal.style.display === 'flex') {
+        console.log('[POD Customizer] ⌨️ Escape key pressed. Closing modal.');
         closePreviewModal();
       }
     }
