@@ -43,7 +43,10 @@ graph TD
    - Loại bỏ tính năng kéo thả, phóng to, thu nhỏ tùy tiện của khách hàng đối với các đối tượng hình ảnh/icon.
 4. **Form-Driven UI**:
    - Khách hàng tương tác qua **form nhập liệu trực quan** (nhập text, chọn số lượng, bấm chọn icon có sẵn). Màn hình canvas 2D đóng vai trò **Preview tự động cập nhật thời gian thực (Live WYSIWYG)**.
-5. **Chiến lược triển khai: POC Storefront & Backend trước**:
+5. **Hỗ trợ Chữ xoay góc (Rotated Text) & Loại trừ Chữ cong (Curved Text - Out of Scope)**:
+   - **Chữ xoay góc (`rotation: deg`)**: Hỗ trợ đầy đủ (ví dụ xoay nghiêng -15°, 45°, 90°). Canvas Fabric.js và Sharp SVG đều hỗ trợ thuộc tính transform rotate bản địa, chuẩn xác 100%.
+   - **Chữ uốn cong (Curved Text / Text on Path)**: **Loại trừ hoàn toàn khỏi phạm vi dự án (Out of Scope)** để tránh rủi ro biến dạng kerning, lỗi font tiếng Việt khi auto-shrink và sai lệch giữa canvas browser với render backend.
+6. **Chiến lược triển khai: POC Storefront & Backend trước**:
    - Xây dựng bản thử nghiệm tương tác (POC) trên Storefront và kết nối Render Backend 300 DPI trước để kiểm chứng thực tế và hoàn thiện JSON Schema.
    - Giao diện quản trị WP-Admin sẽ được xây dựng sau khi Schema đã được chuẩn hóa và đóng băng.
 
@@ -228,7 +231,28 @@ sequenceDiagram
 
 ---
 
-## 5. Lộ trình thực hiện (Proof of Concept Roadmap)
+## 5. Các lưu ý kỹ thuật & giải pháp cốt lõi (Technical Considerations)
+
+1. **Đồng bộ Font chữ giữa Browser và Backend (Font Parity)**:
+   - Trình duyệt nạp Google Fonts, trong khi backend Sharp (Node.js) cần nạp file `.ttf` tương ứng trong thư mục `src/assets/fonts/`.
+   - Storefront bắt buộc chờ `document.fonts.ready` trước khi đo độ dài chữ (`measureText`), đảm bảo tính toán Auto-Shrink không bị sai lệch.
+2. **Hệ tọa độ chuẩn 300 DPI (Design Units & Scaling)**:
+   - Tất cả tọa độ `(x, y)`, `fontSize`, `maxWidth`, `bounds` trong Template JSON đều lấy đơn vị pixel chuẩn in 300 DPI (ví dụ `2400 x 1050 px`).
+   - Storefront chỉ việc nhân với tỷ lệ `scaleFactor = canvas_display_width / design_width` để render preview. Backend Sharp giữ nguyên tỷ lệ `1.0` để xuất file chuẩn nét.
+3. **Điểm neo căn giữa Text (Anchor Point / OriginX)**:
+   - Các text slot căn giữa (`align: 'center'`) sử dụng điểm neo tâm (`originX: 'center'`). Khi chữ dài ra hoặc co lại theo auto-shrink, text co đều về 2 bên từ tâm, không bị xô lệch.
+4. **Xử lý ký tự tiếng Việt & XML Escaping cho SVG**:
+   - Khi render SVG trên Backend Sharp, toàn bộ chuỗi ký tự phải được escape XML (`&` $\rightarrow$ `&amp;`, `<` $\rightarrow$ `&lt;`, `>` $\rightarrow$ `&gt;`), đảm bảo tương thích hoàn hảo với tiếng Việt có dấu.
+5. **Ràng buộc và Validation cho Repeater**:
+   - Trường nhập số lượng (như số cây nến) phải có giới hạn chặn trên và chặn dưới (`min: 1`, `max: 20`, `step: 1`).
+   - Giao diện có nút stepper `[-]` và `[+]` để khách thao tác thuận tiện trên mobile.
+6. **Tối ưu trải nghiệm di động (Mobile-First & Input Debouncing)**:
+   - Bố trí form nhập liệu gọn gàng ngay dưới Canvas Preview.
+   - Áp dụng Debounce (50 - 100ms) khi gõ phím để preview mượt mà không gây giật lag trên thiết bị di động.
+
+---
+
+## 6. Lộ trình thực hiện (Proof of Concept Roadmap)
 
 1. **Bước 1: Storefront Form-Driven UI (Frontend)**:
    - Xây dựng form nhập liệu trực tiếp cạnh sản phẩm (các ô Text, ô chọn Số lượng nến, cụm nút bấm chọn Icon).
