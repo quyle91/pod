@@ -68,7 +68,7 @@ class CustomizerRenderer implements HandlerInterface {
                             $tpl_url = add_query_arg('pod_tpl', $tpl_id);
                             $tpl_icon = '📄';
                             if ($tpl_id === 'tpl_01') $tpl_icon = '👕';
-                            if ($tpl_id === 'tpl_02') $tpl_icon = '☕';
+                            if ($tpl_id === 'tpl_02') $tpl_icon = '👕';
                             if ($tpl_id === 'tpl_03') $tpl_icon = '🎂';
                         ?>
                             <a href="<?php echo esc_url($tpl_url); ?>" class="pod-admin-pill <?php echo $is_current ? 'is-active' : ''; ?>">

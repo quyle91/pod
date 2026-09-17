@@ -1,22 +1,22 @@
 {
   "id": "tpl_03",
-  "name": "Birthday Celebration Mug (Candles Repeater & Auto-Fit Text)",
-  "category": "drinkware",
-  "product_title": "Custom Birthday Milestone Mug",
+  "name": "Birthday Celebration T-Shirt (Candles Repeater & Auto-Fit Text)",
+  "category": "apparel",
+  "product_title": "Custom Birthday Milestone T-Shirt",
   "print_spec": {
     "width_px": 2400,
     "height_px": 2400,
     "dpi": 300
   },
   "mockup": {
-    "id": "mug_white",
-    "name": "Ceramic Mug",
-    "url": "assets/mockups/mug-white.svg",
+    "id": "tshirt_white",
+    "name": "White T-Shirt",
+    "url": "assets/mockups/tshirt-white.svg",
     "bounds": {
-      "x": 840,
-      "y": 880,
-      "width": 560,
-      "height": 720
+      "x": 650,
+      "y": 650,
+      "width": 1100,
+      "height": 1200
     }
   },
   "fields": [
@@ -27,9 +27,9 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 980,
-        "width_px": 90,
-        "height_px": 75
+        "y": 880,
+        "width_px": 180,
+        "height_px": 150
       },
       "options": [
         {
@@ -58,17 +58,17 @@
       "max": 18,
       "sub_image": {
         "url": "assets/cliparts/candle.svg",
-        "width_px": 32,
-        "height_px": 64
+        "width_px": 46,
+        "height_px": 92
       },
       "container_bounds": {
         "x": 1200,
-        "y": 1100,
-        "max_width_px": 520,
-        "max_height_px": 160,
+        "y": 1040,
+        "max_width_px": 750,
+        "max_height_px": 220,
         "cols": 6,
-        "gap_px": 12,
-        "gap_y_px": 14,
+        "gap_px": 16,
+        "gap_y_px": 16,
         "distribution": "grid"
       }
     },
@@ -80,16 +80,16 @@
       "default_value": "Nam Anh",
       "position": {
         "x": 1200,
-        "y": 1240
+        "y": 1220
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 60,
-        "min_font_size_px": 20,
-        "color": "#1e293b",
+        "font_size_px": 96,
+        "min_font_size_px": 30,
+        "color": "#18181b",
         "align": "center",
-        "max_width_px": 560,
+        "max_width_px": 950,
         "rotation": 0
       }
     },
@@ -101,16 +101,16 @@
       "default_value": "Happy Birthday!",
       "position": {
         "x": 1200,
-        "y": 1360
+        "y": 1350
       },
       "style": {
         "font_family": "Dancing Script",
         "font_weight": "600",
-        "font_size_px": 42,
-        "min_font_size_px": 18,
+        "font_size_px": 64,
+        "min_font_size_px": 24,
         "color": "#ec4899",
         "align": "center",
-        "max_width_px": 540,
+        "max_width_px": 850,
         "rotation": 0
       }
     }

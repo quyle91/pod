@@ -1,22 +1,22 @@
 {
   "id": "tpl_02",
-  "name": "Custom Ceramic Mug (Icon Badge & Auto-Fit Text)",
-  "category": "drinkware",
-  "product_title": "Personalized Badge Coffee Mug",
+  "name": "Custom Graphic T-Shirt (Icon Badge & Auto-Fit Text)",
+  "category": "apparel",
+  "product_title": "Personalized Emblem Graphic T-Shirt",
   "print_spec": {
     "width_px": 2400,
     "height_px": 2400,
     "dpi": 300
   },
   "mockup": {
-    "id": "mug_white",
-    "name": "Ceramic Mug",
-    "url": "assets/mockups/mug-white.svg",
+    "id": "tshirt_white",
+    "name": "White T-Shirt",
+    "url": "assets/mockups/tshirt-white.svg",
     "bounds": {
-      "x": 840,
-      "y": 880,
-      "width": 560,
-      "height": 720
+      "x": 650,
+      "y": 650,
+      "width": 1100,
+      "height": 1200
     }
   },
   "fields": [
@@ -27,9 +27,9 @@
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 1040,
-        "width_px": 120,
-        "height_px": 100
+        "y": 940,
+        "width_px": 220,
+        "height_px": 180
       },
       "options": [
         {
@@ -67,16 +67,16 @@
       "default_value": "Jessica",
       "position": {
         "x": 1200,
-        "y": 1220
+        "y": 1140
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
-        "font_size_px": 66,
-        "min_font_size_px": 22,
-        "color": "#1e293b",
+        "font_size_px": 105,
+        "min_font_size_px": 34,
+        "color": "#18181b",
         "align": "center",
-        "max_width_px": 560,
+        "max_width_px": 950,
         "rotation": 0
       }
     },
@@ -88,16 +88,16 @@
       "default_value": "BEST BOSS EVER",
       "position": {
         "x": 1200,
-        "y": 1360
+        "y": 1270
       },
       "style": {
         "font_family": "Oswald",
-        "font_weight": "600",
-        "font_size_px": 42,
-        "min_font_size_px": 18,
+        "font_weight": "700",
+        "font_size_px": 62,
+        "min_font_size_px": 24,
         "color": "#e11d48",
         "align": "center",
-        "max_width_px": 540,
+        "max_width_px": 850,
         "rotation": 0
       }
     }
