@@ -127,3 +127,69 @@ All fixes in this specification must strictly comply with the following architec
   - Remove `box-shadow` and `border-radius` from the app container, canvas wrapper, tab navigation, and tab content panels.
   - Maintain a clean, subtle border (`1px solid var(--pod-border)` / `#e2e8f0`).
 
+### BUG-012: SQLite-Backed Domain License Verification & Connection Diagnostics (Days Remaining & Graceful Status)
+- **Reported Issue**:
+  1. Backend hiện tại chỉ xác thực shared secret tĩnh (`X-POD-SECRET`), chưa quản lý thời hạn giấy phép kết nối theo từng Domain (ví dụ gói 1 năm), dẫn đến rủi ro không thể kiểm soát các shop/domain đối tác hết hạn.
+  2. Nút "Test Connection" trong trang Cài đặt WordPress (`SettingsPage.php`) hiện chỉ kiểm tra server sống hay chết (`/health`), chưa chẩn đoán và hiển thị thời hạn giấy phép (ngày bắt đầu `starts_at`, ngày hết hạn `expires_at`, và số ngày sử dụng còn lại `days_remaining`).
+- **Architectural & Business Requirements**:
+  1. **Hạ tầng CSDL SQLite phía Backend (Zero External DB Dependency)**:
+     - Sử dụng SQLite file-based (lưu tại `storage/licenses.sqlite` trên container `pod_backend`).
+     - Bảng `licenses`:
+       - `domain VARCHAR(255) PRIMARY KEY`
+       - `secret_token VARCHAR(255) NOT NULL`
+       - `status VARCHAR(20) DEFAULT 'active'` (`'active' | 'suspended' | 'expired'`)
+       - `starts_at DATETIME NOT NULL`
+       - `expires_at DATETIME NOT NULL`
+       - `created_at DATETIME DEFAULT CURRENT_TIMESTAMP`
+     - Tự động gieo mầm (seed) bản ghi mặc định cho domain `pod.localhost` (thời hạn 1 năm từ ngày tạo) khi khởi chạy server.
+  2. **Quy tắc Kiểm tra Kết nối (Test Connection Diagnostics Rule)**:
+     - Khi Admin bấm nút "Test Connection" trong WordPress (`SettingsPage.php`):
+       - WordPress gửi kèm `X-POD-SECRET` và `X-POD-DOMAIN` (domain hiện tại của site).
+       - Backend trả về **HTTP 200 (Luôn luôn thành công về mặt kết nối)** bất kể license còn hạn hay đã hết hạn:
+         ```json
+         {
+           "status": "healthy",
+           "service": "pod-backend-render-engine",
+           "license": {
+             "domain": "pod.localhost",
+             "status": "active",
+             "starts_at": "2026-09-18T00:00:00Z",
+             "expires_at": "2027-09-18T00:00:00Z",
+             "days_remaining": 365,
+             "is_expired": false
+           }
+         }
+         ```
+       - Phía WordPress Admin hiển thị thông báo trực quan rõ ràng:
+         - ✅ Kết nối mạng thành công tới Render Engine.
+         - 📅 Ngày kích hoạt: `YYYY-MM-DD`
+         - ⏳ Ngày hết hạn: `YYYY-MM-DD` (Còn lại: `N` ngày).
+         - Nếu `is_expired == true`: Vẫn xác nhận kết nối mạng thành công nhưng hiển thị cảnh báo đỏ nổi bật: *"Gói kết nối của domain này đã hết hạn (quá hạn X ngày). Vui lòng gia hạn dịch vụ."*
+  3. **Quy tắc Bắt buộc Chặn với Các API Nghiệp Vụ (Strict Gatekeeping for Functional APIs)**:
+     - Tất cả các API chức năng nặng:
+       - `POST /api/v1/render` (Render đơn hàng 300 DPI)
+       - `POST /api/v1/templates/parse-psd` (Bóc tách file PSD)
+     - Bắt buộc phải đi qua middleware xác thực bản quyền:
+       - Nếu sai secret hoặc domain không tồn tại: `401 Unauthorized`.
+       - Nếu `status !== 'active'` hoặc `expires_at <= NOW()` (hết hạn): **Lập tức từ chối với mã lỗi HTTP 403 Forbidden**:
+         ```json
+         {
+           "success": false,
+           "error_code": "LICENSE_EXPIRED",
+           "error": "Gói kết nối Render Engine của domain [domain] đã hết hạn. Vui lòng gia hạn để tiếp tục xử lý in ấn."
+         }
+         ```
+
+---
+
+## 13. BUG-013: Domain License Protection & Diagnostics on Render Studio (/test-render)
+### Vấn đề & Yêu cầu:
+- Trang công cụ Render Studio (`GET /test-render` / `test-render.html`) trước đây chỉ kiểm tra secret token cứng mà chưa tích hợp kiểm tra bản quyền domain SQLite.
+- Cần áp dụng cơ chế xác thực domain và hạn sử dụng tương tự:
+  1. Khi truy cập `GET /test-render?domain=...&secret=...`:
+     - Nếu không có secret hoặc secret sai $\rightarrow$ Hiển thị trang 401 Unauthorized.
+     - Nếu domain chưa đăng ký $\rightarrow$ Hiển thị trang 403 Domain Chưa Đăng Ký.
+     - Nếu license đã hết hạn $\rightarrow$ Hiển thị trang 403 License Expired (thông báo ngày hết hạn cụ thể).
+  2. Nút bấm khởi chạy công cụ trong WordPress (`SettingsPage.php`) tự động sinh URL gắn kèm `domain` và `secret`.
+  3. Header của `test-render.html` tự động lấy thông tin chẩn đoán từ `/health`, hiển thị domain hiện tại cùng huy hiệu trạng thái: `License Active (X days remaining)` hoặc `License Expired`.
+  4. Các nút thực hiện render trên công cụ truyền header `X-POD-DOMAIN` và `domain_name` vào API, ngăn chặn an toàn và thông báo rõ ràng khi giấy phép hết hạn.

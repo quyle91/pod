@@ -46,49 +46,6 @@ class CustomizerRenderer implements HandlerInterface {
         $is_template_mode = !empty($active_template);
         ?>
         <div id="pod-customizer-app" class="pod-customizer-app <?php echo $is_template_mode ? 'pod-is-template-mode' : ''; ?>">
-            <?php 
-            $is_admin = current_user_can('administrator') || current_user_can('manage_options');
-            if ($is_admin): 
-                $all_templates = \PodCustomizer\Services\TemplateLoader::get_all_templates();
-            ?>
-                <!-- Admin Template Switcher Bar (Visible only to Administrators) -->
-                <div class="pod-admin-template-bar">
-                    <div class="pod-admin-bar-top">
-                        <div class="pod-admin-bar-title">
-                            <span class="pod-admin-badge">👑 Admin Switcher</span>
-                            <span class="pod-admin-desc"><?php esc_html_e('Quick Template Switcher (Visible to Administrators only):', 'pod-customizer'); ?></span>
-                        </div>
-                        <a href="http://pod-backend.localhost/test-render.html?secret=pod_secret_token_123456" target="_blank" class="pod-admin-qa-link" title="<?php esc_attr_e('Open Sharp 300 DPI Studio', 'pod-customizer'); ?>">
-                            🛠️ <?php esc_html_e('Sharp 300 DPI Studio', 'pod-customizer'); ?> ↗
-                        </a>
-                    </div>
-                    <div class="pod-admin-bar-pills">
-                        <?php foreach ($all_templates as $tpl_id => $tpl_item): 
-                            $is_current = ($active_template && ($active_template['id'] ?? '') === $tpl_id);
-                            $tpl_url = add_query_arg('pod_tpl', $tpl_id);
-                            $tpl_icon = '📄';
-                            if ($tpl_id === 'tpl_01') $tpl_icon = '👕';
-                            if ($tpl_id === 'tpl_02') $tpl_icon = '👕';
-                            if ($tpl_id === 'tpl_03') $tpl_icon = '🎂';
-                        ?>
-                            <a href="<?php echo esc_url($tpl_url); ?>" class="pod-admin-pill <?php echo $is_current ? 'is-active' : ''; ?>">
-                                <span class="pod-pill-icon"><?php echo $tpl_icon; ?></span>
-                                <span class="pod-pill-name"><strong><?php echo esc_html($tpl_id); ?></strong>: <?php echo esc_html($tpl_item['name']); ?></span>
-                                <?php if ($is_current): ?>
-                                    <span class="pod-pill-active-tag">Active</span>
-                                <?php endif; ?>
-                            </a>
-                        <?php endforeach; ?>
-                        <a href="<?php echo esc_url(remove_query_arg('pod_tpl')); ?>" class="pod-admin-pill <?php echo !$is_template_mode ? 'is-active' : ''; ?>">
-                            <span class="pod-pill-icon">🎨</span>
-                            <span class="pod-pill-name"><strong>Legacy</strong>: Free-form Canvas</span>
-                            <?php if (!$is_template_mode): ?>
-                                <span class="pod-pill-active-tag">Active</span>
-                            <?php endif; ?>
-                        </a>
-                    </div>
-                </div>
-            <?php endif; ?>
             <div class="pod-header">
                 <div class="pod-header-title">
                     <span class="pod-icon">🎨</span>

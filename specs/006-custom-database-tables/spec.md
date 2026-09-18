@@ -12,7 +12,7 @@ This specification defines the dedicated relational database layer and migration
 
 | Domain | Primary Requirement Document | Key Scope |
 | :--- | :--- | :--- |
-| **Entities & Database** | [`.specify/entities_and_database.md`](../../.specify/entities_and_database.md) | Canonical Schema for `{$wpdb->prefix}pod_render_jobs` and `{$wpdb->prefix}pod_preview_files` |
+| **Entities & Database** | [`.specify/database.md`](../../.specify/database.md) | Canonical Schema for `{$wpdb->prefix}pod_render_jobs` and `{$wpdb->prefix}pod_preview_files` |
 | **Execution Rules** | [`.specify/execution_rules.md`](../../.specify/execution_rules.md) | Section 2.2: Mandatory Table Prefix (`{$wpdb->prefix}pod_*`) & Explicit Foreign Key Constraints |
 | **Project Constitution** | [`.specify/constitution.md`](../../.specify/constitution.md) | Strict Data Contracts, zero data loss, safe database upgrades using `dbDelta` |
 

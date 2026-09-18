@@ -1,8 +1,8 @@
 {
-  "id": "tpl_03",
-  "name": "Birthday Celebration T-Shirt (Candles Repeater & Auto-Fit Text)",
+  "id": "tpl_01",
+  "name": "Personalized Graphic T-Shirt (Emblem, Milestone Counter & Auto-Fit Text)",
   "category": "apparel",
-  "product_title": "Custom Birthday Milestone T-Shirt",
+  "product_title": "Custom Personalized Graphic T-Shirt",
   "print_spec": {
     "width_px": 2400,
     "height_px": 2400,
@@ -23,70 +23,80 @@
     {
       "id": "badge_icon",
       "type": "preset_picker",
-      "label": "Celebration Icon",
+      "label": "Choose Your Emblem / Icon",
       "default_value": "crown",
       "position": {
         "x": 1200,
-        "y": 860,
-        "width_px": 240,
+        "y": 820,
+        "width_px": 260,
         "height_px": 200
       },
       "options": [
         {
           "id": "crown",
-          "label": "Birthday Crown",
+          "label": "Royal Crown",
           "url": "assets/cliparts/crown.svg"
         },
         {
           "id": "star",
-          "label": "Superstar",
+          "label": "Golden Star",
           "url": "assets/cliparts/star.svg"
         },
         {
           "id": "heart",
-          "label": "Sweet Heart",
+          "label": "Love Heart",
           "url": "assets/cliparts/heart.svg"
+        },
+        {
+          "id": "cat",
+          "label": "Playful Cat",
+          "url": "assets/cliparts/cat.svg"
+        },
+        {
+          "id": "dog",
+          "label": "Loyal Dog",
+          "url": "assets/cliparts/dog.svg"
         }
       ]
     },
     {
       "id": "candle_count",
       "type": "repeater_counter",
-      "label": "Milestone Age (Candles Count)",
-      "default_value": 7,
+      "label": "Milestone Count (Repeater Badges)",
+      "default_value": 5,
       "min": 1,
-      "max": 18,
+      "max": 12,
       "sub_image": {
         "url": "assets/cliparts/candle.svg",
-        "width_px": 56,
-        "height_px": 112
+        "width_px": 48,
+        "height_px": 96
       },
       "container_bounds": {
         "x": 1200,
-        "y": 1040,
-        "max_width_px": 850,
-        "max_height_px": 260,
+        "y": 990,
+        "max_width_px": 800,
+        "max_height_px": 220,
         "cols": 6,
-        "gap_px": 20,
-        "gap_y_px": 20,
+        "gap_px": 18,
+        "gap_y_px": 16,
         "distribution": "grid"
       }
     },
     {
       "id": "recipient_name",
       "type": "text",
-      "label": "Birthday Person Name",
-      "placeholder": "Enter name (e.g. Nam Anh)",
-      "default_value": "Nam Anh",
+      "label": "Recipient / Main Name",
+      "placeholder": "Enter name (e.g. Alex Henderson)",
+      "default_value": "Alex",
       "position": {
         "x": 1200,
-        "y": 1240
+        "y": 1180
       },
       "style": {
         "font_family": "Montserrat",
         "font_weight": "700",
         "font_size_px": 120,
-        "min_font_size_px": 38,
+        "min_font_size_px": 36,
         "color": "#18181b",
         "align": "center",
         "max_width_px": 1050,
@@ -94,24 +104,24 @@
       }
     },
     {
-      "id": "birthday_wishes",
+      "id": "slogan_text",
       "type": "text",
-      "label": "Greeting / Message",
-      "placeholder": "Enter wishes (e.g. Wishing you endless joy!)",
-      "default_value": "Happy Birthday!",
+      "label": "Sub-Text / Slogan (Angled)",
+      "placeholder": "Enter slogan (e.g. Vintage Legend Since 1990)",
+      "default_value": "VINTAGE LEGEND",
       "position": {
         "x": 1200,
-        "y": 1380
+        "y": 1330
       },
       "style": {
-        "font_family": "Dancing Script",
-        "font_weight": "600",
-        "font_size_px": 80,
-        "min_font_size_px": 30,
-        "color": "#ec4899",
+        "font_family": "Oswald",
+        "font_weight": "700",
+        "font_size_px": 75,
+        "min_font_size_px": 28,
+        "color": "#4f46e5",
         "align": "center",
         "max_width_px": 950,
-        "rotation": 0
+        "rotation": -8
       }
     }
   ]

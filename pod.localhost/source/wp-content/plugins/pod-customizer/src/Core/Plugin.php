@@ -7,7 +7,9 @@ use PodCustomizer\WooCommerce\CartHandler;
 use PodCustomizer\WooCommerce\OrderHandler;
 use PodCustomizer\WooCommerce\OrderWebhookDispatcher;
 use PodCustomizer\Admin\SettingsPage;
+use PodCustomizer\Admin\IconPostType;
 use PodCustomizer\API\CallbackController;
+use PodCustomizer\API\AssetLibraryController;
 use PodCustomizer\Frontend\CustomizerAssets;
 use PodCustomizer\Frontend\CustomizerRenderer;
 use PodCustomizer\Services\PreviewStorageManager;
@@ -56,7 +58,9 @@ final class Plugin {
             new OrderHandler(),
             new OrderWebhookDispatcher(),
             new SettingsPage(),
+            new IconPostType(),
             new CallbackController(),
+            new AssetLibraryController(),
             new CustomizerAssets(),
             new CustomizerRenderer(),
             new PreviewStorageManager(),

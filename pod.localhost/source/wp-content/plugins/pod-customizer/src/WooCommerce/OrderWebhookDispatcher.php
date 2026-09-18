@@ -129,6 +129,7 @@ class OrderWebhookDispatcher implements HandlerInterface, DispatcherInterface {
             'headers'     => [
                 'Content-Type'  => 'application/json',
                 'X-POD-SECRET'  => $shared_secret,
+                'X-POD-DOMAIN'  => $site_host,
             ],
             'body'        => wp_json_encode($payload),
             'data_format' => 'body',

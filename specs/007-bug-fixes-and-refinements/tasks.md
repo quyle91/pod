@@ -114,11 +114,29 @@ This checklist tracks actionable fixes for all reported bugs and architectural r
 
 ---
 
+### BUG-012: SQLite-Backed Domain License Verification & Connection Diagnostics
+- [x] **TASK-060**: Cài đặt thư viện SQLite (`sql.js` WASM/SQLite engine) và tạo `src/services/licenseManager.js` trên `pod-backend.localhost` quản lý CSDL file `storage/licenses.sqlite`.
+- [x] **TASK-061**: Khởi tạo schema bảng `licenses` trong SQLite và tự động seed bản ghi mặc định cho domain `pod.localhost` với thời hạn 1 năm.
+- [x] **TASK-062**: Nâng cấp endpoint `GET /health` nhận `X-POD-DOMAIN` và `X-POD-SECRET`, luôn trả về HTTP 200 kèm metadata giấy phép (`starts_at`, `expires_at`, `days_remaining`, `is_expired`).
+- [x] **TASK-063**: Cập nhật middleware `auth.js` trên backend để chặn nghiêm ngặt (HTTP 403 `LICENSE_EXPIRED` / `DOMAIN_UNREGISTERED`, HTTP 401 `INVALID_SECRET`) các API nghiệp vụ (`/api/v1/render`, `/api/v1/test-render`) khi license hết hạn hoặc không hợp lệ.
+- [x] **TASK-064**: Cập nhật AJAX Test Connection trong `SettingsPage.php` (`pod-customizer`): gửi kèm `X-POD-DOMAIN`, trích xuất thông tin ngày kích hoạt, ngày hết hạn và số ngày còn lại để hiển thị trong kết quả Test Connection (kèm cảnh báo nếu hết hạn).
+- [x] **TASK-065**: Kiểm thử tích hợp: 
+  - Test Connection khi còn hạn $\rightarrow$ Hiển thị số ngày còn lại hợp lệ (365 ngày).
+  - Test Connection khi giả lập hết hạn $\rightarrow$ Vẫn kết nối thành công HTTP 200 nhưng hiển thị cảnh báo đỏ nổi bật.
+  - Gọi lệnh render khi giả lập hết hạn $\rightarrow$ Backend chặn an toàn với HTTP 403 và mã lỗi `LICENSE_EXPIRED`.
+
+---
+
+### BUG-013: Domain License Protection & Diagnostics on Render Studio (/test-render)
+- [x] **TASK-066**: Nâng cấp route `GET /test-render` trong `server.js` để xác thực domain license qua `licenseManager.verifyLicense` (chặn truy cập trực tiếp nếu secret sai hoặc license hết hạn/chưa đăng ký).
+- [x] **TASK-067**: Cập nhật link khởi chạy Render Studio trong `SettingsPage.php` truyền tự động tham số `domain` của site hiện tại (`?domain=...&secret=...`).
+- [x] **TASK-068**: Bổ sung hiển thị `Domain` và badge trạng thái `License Active (X days remaining)` / `License Expired` trên thanh Header của `test-render.html` thông qua `/health`.
+- [x] **TASK-069**: Đảm bảo các hàm gọi render từ `test-render.html` (`runRenderByOrder`, `runRenderByJson`) truyền đầy đủ `X-POD-DOMAIN` và `domain_name`, hiển thị cảnh báo đẹp mắt khi license hết hạn.
+
+---
+
 ## 2. Active & Upcoming Tasks (Checklist Extension)
 
 *New bug reports and enhancement tasks will be appended here as testing continues.*
 
-- [ ] **TASK-060**: *(Awaiting next user report or edge case)*
-
-
-
+- [ ] **TASK-070**: *(Awaiting next user report or edge case)*

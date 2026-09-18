@@ -23,9 +23,7 @@ class SettingsPage implements HandlerInterface {
     }
 
     /**
-     * Register settings submenu under Settings (options-general.php).
-     *
-     * @return void
+     * Register settings submenu under native WordPress Settings (options-general.php).
      */
     public function add_settings_menu(): void {
         add_options_page(
@@ -232,11 +230,13 @@ class SettingsPage implements HandlerInterface {
 
         $backend_url = rtrim($raw_backend_url, '/');
         $shared_secret = isset($_POST['shared_secret']) ? sanitize_text_field($_POST['shared_secret']) : get_option('pod_shared_secret', 'pod_secret_token_123456');
+        $domain = wp_parse_url(home_url(), PHP_URL_HOST) ?: 'pod.localhost';
 
         // Resolve target health URL (with intelligent local docker bridge fallback)
         $target_url = $backend_url . '/health';
         $headers = [
             'X-POD-SECRET' => $shared_secret,
+            'X-POD-DOMAIN' => $domain,
             'Accept'       => 'application/json',
         ];
 
@@ -266,6 +266,7 @@ class SettingsPage implements HandlerInterface {
 
         if ($status_code >= 200 && $status_code < 300) {
             $service = is_array($data) && isset($data['service']) ? $data['service'] : 'pod-backend-render-engine';
+            $license = is_array($data) && isset($data['license']) ? $data['license'] : null;
             wp_send_json_success([
                 'message'  => sprintf(
                     __('Connection successful! Service "%s" responded with HTTP %d in %d ms.', 'pod-customizer'),
@@ -276,6 +277,7 @@ class SettingsPage implements HandlerInterface {
                 'service'  => $service,
                 'duration' => $duration_ms,
                 'status'   => $status_code,
+                'license'  => $license,
                 'data'     => $data,
             ]);
         } else {
@@ -307,10 +309,19 @@ class SettingsPage implements HandlerInterface {
         $backend_url = get_option('pod_backend_url', '');
         $shared_secret = get_option('pod_shared_secret', 'pod_secret_token_123456');
         $base_tool_url = !empty($backend_url) ? rtrim($backend_url, '/') . '/test-render' : 'http://pod-backend.localhost/test-render';
-        $test_tool_url = add_query_arg('secret', $shared_secret, $base_tool_url);
+        $site_domain = wp_parse_url(home_url(), PHP_URL_HOST) ?: 'pod.localhost';
+        $test_tool_url = add_query_arg([
+            'domain' => $site_domain,
+            'secret' => $shared_secret,
+        ], $base_tool_url);
         ?>
         <div class="wrap">
-            <h1>🎨 <?php echo esc_html__('POD Customizer & Print Ready Engine', 'pod-customizer'); ?></h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 style="margin: 0;">🎨 <?php echo esc_html__('POD Customizer & Print Ready Engine', 'pod-customizer'); ?></h1>
+                <a href="<?php echo esc_url(admin_url('edit.php?post_type=pod_icon')); ?>" class="button button-primary" style="background: #4f46e5; border-color: #4338ca; font-weight: 600;">
+                    🖼️ <?php echo esc_html__('Manage POD Icons & Categories', 'pod-customizer'); ?> ➔
+                </a>
+            </div>
             <hr class="wp-header-end">
 
             <?php if (isset($_GET['cleaned_previews']) || isset($_GET['cleaned_prints'])): ?>
@@ -411,7 +422,8 @@ class SettingsPage implements HandlerInterface {
                 var url = $('#pod_backend_url').val().trim().replace(/\/+$/, '');
                 var secret = $('input[name="pod_shared_secret"]').val().trim();
                 var base = url ? (url + '/test-render') : 'http://pod-backend.localhost/test-render';
-                var testToolUrl = secret ? (base + '?secret=' + encodeURIComponent(secret)) : base;
+                var siteDomain = '<?php echo esc_js(wp_parse_url(home_url(), PHP_URL_HOST) ?: 'pod.localhost'); ?>';
+                var testToolUrl = base + '?domain=' + encodeURIComponent(siteDomain) + (secret ? ('&secret=' + encodeURIComponent(secret)) : '');
                 $('#pod_sidebar_test_tool_btn').attr('href', testToolUrl);
             });
 
@@ -443,9 +455,51 @@ class SettingsPage implements HandlerInterface {
                     $result.show();
 
                     if (res && res.success) {
+                        var lic = res.data && res.data.license;
+                        var licHtml = '';
+
+                        if (lic && lic.found) {
+                            var statusBadge = lic.is_expired
+                                ? '<span style="background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase;">' + '<?php echo esc_js(__('EXPIRED', 'pod-customizer')); ?>' + '</span>'
+                                : '<span style="background: #10b981; color: #fff; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase;">' + '<?php echo esc_js(__('ACTIVE', 'pod-customizer')); ?>' + '</span>';
+
+                            var startsAt = lic.starts_at ? new Date(lic.starts_at).toLocaleDateString() : 'N/A';
+                            var expiresAt = lic.expires_at ? new Date(lic.expires_at).toLocaleDateString() : 'N/A';
+                            var daysColor = lic.is_expired ? '#ef4444' : (lic.days_remaining <= 30 ? '#f59e0b' : '#059669');
+
+                            licHtml = '<div style="margin-top: 10px; padding: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px;">' +
+                                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">' +
+                                    '<div><strong><?php echo esc_js(__('Domain License:', 'pod-customizer')); ?></strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">' + (lic.domain || 'unknown') + '</code></div>' +
+                                    '<div>' + statusBadge + '</div>' +
+                                '</div>' +
+                                '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; color: #475569;">' +
+                                    '<div><span style="color: #64748b;"><?php echo esc_js(__('License Key:', 'pod-customizer')); ?></span><br><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">' + (lic.license_key || sharedSecret || 'N/A') + '</code></div>' +
+                                    '<div><span style="color: #64748b;"><?php echo esc_js(__('Start Date:', 'pod-customizer')); ?></span><br><strong>' + startsAt + '</strong></div>' +
+                                    '<div><span style="color: #64748b;"><?php echo esc_js(__('Expiration Date:', 'pod-customizer')); ?></span><br><strong>' + expiresAt + '</strong></div>' +
+                                    '<div><span style="color: #64748b;"><?php echo esc_js(__('Remaining Time:', 'pod-customizer')); ?></span><br><strong style="color: ' + daysColor + ';">' + lic.days_remaining + ' <?php echo esc_js(__('days', 'pod-customizer')); ?>' + (lic.is_expired ? ' (Expired)' : '') + '</strong></div>' +
+                                '</div>';
+
+                            if (lic.is_expired) {
+                                licHtml += '<div style="margin-top: 10px; padding: 8px 10px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 4px; color: #9f1239; font-size: 12px; font-weight: 500;">' +
+                                    '⚠️ <?php echo esc_js(__('Notice: Your domain license has expired. Test connection succeeded, but production print rendering is suspended until renewal.', 'pod-customizer')); ?>' +
+                                '</div>';
+                            } else if (!lic.secret_valid) {
+                                licHtml += '<div style="margin-top: 10px; padding: 8px 10px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 4px; color: #92400e; font-size: 12px; font-weight: 500;">' +
+                                    '⚠️ <?php echo esc_js(__('Warning: Server reachable, but secret token does not match registered domain license.', 'pod-customizer')); ?>' +
+                                '</div>';
+                            }
+
+                            licHtml += '</div>';
+                        } else if (lic && !lic.found) {
+                            licHtml = '<div style="margin-top: 10px; padding: 10px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; color: #92400e; font-size: 13px;">' +
+                                '⚠️ <strong><?php echo esc_js(__('Domain Unregistered:', 'pod-customizer')); ?></strong> ' + (lic.message || '<?php echo esc_js(__('Domain is not registered in the backend license database.', 'pod-customizer')); ?>') +
+                            '</div>';
+                        }
+
                         $result.html(
-                            '<div class="notice notice-success inline" style="padding: 10px 14px; margin: 0; border-left: 4px solid #10b981; background: #ecfdf5; border-radius: 4px;">' +
-                            '<p style="margin: 0; color: #065f46; font-size: 13px; font-weight: 600;">✅ ' + res.data.message + '</p>' +
+                            '<div class="notice notice-success inline" style="padding: 12px 14px; margin: 0; border-left: 4px solid #10b981; background: #ecfdf5; border-radius: 4px;">' +
+                            '<p style="margin: 0 0 6px 0; color: #065f46; font-size: 13px; font-weight: 600;">✅ ' + res.data.message + '</p>' +
+                            licHtml +
                             '</div>'
                         );
                     } else {

@@ -11,7 +11,7 @@ use PodCustomizer\Contracts\HandlerInterface;
  */
 class MigrationManager implements HandlerInterface {
 
-    public const DB_VERSION = '1.0.0';
+    public const DB_VERSION = '1.1.0';
     public const OPTION_DB_VERSION = 'pod_db_version';
 
     /**
@@ -46,6 +46,8 @@ class MigrationManager implements HandlerInterface {
         $charset_collate = $wpdb->get_charset_collate();
         $table_jobs = $wpdb->prefix . 'pod_render_jobs';
         $table_previews = $wpdb->prefix . 'pod_preview_files';
+        $table_categories = $wpdb->prefix . 'pod_icon_categories';
+        $table_icons = $wpdb->prefix . 'pod_icons';
         $table_order_items = $wpdb->prefix . 'woocommerce_order_items';
 
         // 1. Table: pod_render_jobs
@@ -86,10 +88,44 @@ class MigrationManager implements HandlerInterface {
             KEY idx_status_expires (status, expires_at)
         ) {$charset_collate};";
 
+        // 3. Table: pod_icon_categories
+        $sql_categories = "CREATE TABLE {$table_categories} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            slug varchar(100) NOT NULL,
+            description text DEFAULT NULL,
+            sort_order int(11) NOT NULL DEFAULT 0,
+            is_active tinyint(1) NOT NULL DEFAULT 1,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY uk_pod_category_slug (slug),
+            KEY idx_pod_category_status (is_active, sort_order)
+        ) {$charset_collate};";
+
+        // 4. Table: pod_icons
+        $sql_icons = "CREATE TABLE {$table_icons} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            category_id bigint(20) unsigned NOT NULL,
+            title varchar(255) NOT NULL,
+            slug varchar(100) NOT NULL,
+            thumbnail_url varchar(500) NOT NULL,
+            print_url varchar(500) NOT NULL,
+            is_vector tinyint(1) NOT NULL DEFAULT 0,
+            sort_order int(11) NOT NULL DEFAULT 0,
+            status varchar(30) NOT NULL DEFAULT 'active',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY idx_pod_icon_cat (category_id),
+            KEY idx_pod_icon_status (status, sort_order)
+        ) {$charset_collate};";
+
         dbDelta($sql_jobs);
         dbDelta($sql_previews);
+        dbDelta($sql_categories);
+        dbDelta($sql_icons);
 
-        // 3. Establish Foreign Key Constraints safely
+        // 5. Establish Foreign Key Constraints safely
         $this->add_foreign_key_if_missing(
             $table_jobs,
             'fk_pod_jobs_order_item',
@@ -106,6 +142,15 @@ class MigrationManager implements HandlerInterface {
             $table_order_items,
             'order_item_id',
             'SET NULL'
+        );
+
+        $this->add_foreign_key_if_missing(
+            $table_icons,
+            'fk_pod_icon_category',
+            'category_id',
+            $table_categories,
+            'id',
+            'CASCADE'
         );
 
         update_option(self::OPTION_DB_VERSION, self::DB_VERSION);

@@ -238,8 +238,8 @@ wp-content/plugins/pod-customizer/templates/
   - Cài đặt font chữ `.ttf` trong container `pod_backend`.
 
 * **Phase 4: Kiểm thử E2E & Đóng băng Schema (Verification & Freeze)**:
-  - Kiểm tra 3 mẫu template trên Storefront và xuất file in 300 DPI.
+  - Kiểm tra các tính năng template trên Storefront và xuất file in 300 DPI.
   - Đảm bảo độ sắc nét và sự đồng bộ 100% giữa màn hình khách và file in.
+  - Đóng băng Schema Template chuẩn làm nền tảng cho bộ tạo template tự động.
 
-* **Phase 5: Xây dựng giao diện Quản trị WP-Admin (Admin UI)**:
-  - Dựng Meta Box trong trang Edit Product để Admin tự cấu hình các template dựa trên Schema đã được chứng minh thành công.
+*(Lưu ý: Phase 5 ban đầu về Meta Box nhập thủ công trong WP-Admin được lược bỏ. Toàn bộ quy trình tạo và nạp template sẽ được tự động hóa bằng cách bóc tách file PSD trực tiếp trong **Spec 009: Admin Template Importer**. Sau khi Spec 009 hoàn thành, hệ thống sẽ tiến hành kiểm thử toàn diện giao diện Front-end trong **Spec 010**).*

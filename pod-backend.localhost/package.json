@@ -9,13 +9,16 @@
     "test": "node --test"
   },
   "dependencies": {
+    "ag-psd": "^31.0.2",
+    "archiver": "^7.0.1",
     "axios": "^1.7.9",
+    "canvas": "^3.2.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "morgan": "^1.10.0",
     "sharp": "^0.33.5",
-    "zod": "^3.24.2",
-    "archiver": "^7.0.1"
+    "sql.js": "^1.12.0",
+    "zod": "^3.24.2"
   }
 }

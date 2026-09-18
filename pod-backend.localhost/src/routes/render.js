@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const sharpRenderer = require('../services/sharpRenderer');
-const { verifySecret } = require('../middleware/auth');
+const { verifySecret, verifyLicense } = require('../middleware/auth');
 const axios = require('axios');
 
 /**
  * POST /api/v1/render
  * Initiates render task for a custom order item.
  */
-router.post('/render', verifySecret, async (req, res) => {
+router.post('/render', verifyLicense, async (req, res) => {
     try {
         const payload = req.body;
         if (!payload || !payload.order_id) {
@@ -76,9 +76,9 @@ router.post('/render', verifySecret, async (req, res) => {
  * POST /api/v1/test-render
  * Fast developer & QA test endpoint.
  * Accepts order_id (fetches state automatically from WP) OR raw canvas_state / _pod_canvas_state.
- * Protected by verifySecret to prevent unauthorized access, data leaks, and server resource abuse.
+ * Protected by verifyLicense to prevent unauthorized access, expired domain abuse.
  */
-router.post('/test-render', verifySecret, async (req, res) => {
+router.post('/test-render', verifyLicense, async (req, res) => {
     try {
         let payload = req.body || {};
         let orderId = payload.order_id;

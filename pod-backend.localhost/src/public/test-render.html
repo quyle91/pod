@@ -545,9 +545,19 @@
         <div class="brand-subtitle">Ultra Fast Multi-Format Test Harness for 300 DPI Rendering</div>
       </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #34d399; font-weight: 600;">
-        <span>🔒 Authorized (WP Admin Session)</span>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 6px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #a5b4fc; font-weight: 500;">
+        <span>🌐 <strong>Domain:</strong> <span id="header-domain" style="color: #fff; font-weight: 700;">pod.localhost</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #94a3b8;">
+        <span>🔑 <strong>Key:</strong> <code id="header-license-key" style="color: #e2e8f0; font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">...</code></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #94a3b8;">
+        <span>📅 <strong>Hạn:</strong> <span id="header-license-dates" style="color: #e2e8f0; font-weight: 600;">...</span></span>
+      </div>
+      <div class="badge" id="header-license-badge">
+        <span class="badge-dot"></span>
+        <span id="header-license-text">Checking License...</span>
       </div>
       <div class="badge" id="service-status">
         <span class="badge-dot"></span>
@@ -820,6 +830,67 @@
       return urlParams.get('secret') || '';
     }
 
+    function getDomainName() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('domain') || 'pod.localhost';
+    }
+
+    async function loadLicenseDiagnostics() {
+      const domain = getDomainName();
+      const secret = getSecretToken();
+      const domainEl = document.getElementById('header-domain');
+      const keyEl = document.getElementById('header-license-key');
+      const datesEl = document.getElementById('header-license-dates');
+      const badgeEl = document.getElementById('header-license-badge');
+      const textEl = document.getElementById('header-license-text');
+      if (domainEl) domainEl.textContent = domain;
+      if (keyEl) keyEl.textContent = secret || 'N/A';
+
+      function formatDateOnly(isoStr) {
+        if (!isoStr) return 'N/A';
+        try {
+          const d = new Date(isoStr);
+          return isNaN(d.getTime()) ? isoStr : d.toISOString().split('T')[0];
+        } catch {
+          return isoStr;
+        }
+      }
+
+      try {
+        const res = await fetch(`/health?domain=${encodeURIComponent(domain)}&secret=${encodeURIComponent(secret)}`);
+        const json = await res.json();
+        if (json && json.license) {
+          const lic = json.license;
+          if (domainEl) domainEl.textContent = lic.domain || domain;
+          if (keyEl) keyEl.textContent = lic.license_key || secret || 'N/A';
+          if (datesEl) {
+            const startFmt = formatDateOnly(lic.starts_at);
+            const expFmt = formatDateOnly(lic.expires_at);
+            datesEl.textContent = `${startFmt} ➔ ${expFmt}`;
+          }
+          if (badgeEl && textEl) {
+            if (lic.is_expired) {
+              badgeEl.style.background = 'rgba(239, 68, 68, 0.15)';
+              badgeEl.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+              badgeEl.style.color = '#f87171';
+              const dot = badgeEl.querySelector('.badge-dot');
+              if (dot) {
+                dot.style.background = '#ef4444';
+                dot.style.boxShadow = '0 0 8px #ef4444';
+              }
+              textEl.textContent = `Expired (0 days)`;
+              badgeEl.title = `Expired on ${lic.expires_at ? new Date(lic.expires_at).toLocaleDateString() : 'N/A'}`;
+            } else {
+              textEl.textContent = `Active (${lic.days_remaining} days)`;
+              badgeEl.title = `Valid from ${lic.starts_at ? new Date(lic.starts_at).toLocaleDateString() : 'N/A'} to ${lic.expires_at ? new Date(lic.expires_at).toLocaleDateString() : 'N/A'}`;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load license diagnostics:', err);
+      }
+    }
+
     async function runRenderByOrder() {
       const orderId = document.getElementById('input-order-id').value;
       if (!orderId) {
@@ -832,17 +903,26 @@
 
       try {
         const secret = getSecretToken();
+        const domain = getDomainName();
         const res = await fetch('/api/v1/test-render', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'X-POD-SECRET': secret
+            'X-POD-SECRET': secret,
+            'X-POD-DOMAIN': domain
           },
-          body: JSON.stringify({ order_id: parseInt(orderId, 10) })
+          body: JSON.stringify({ 
+            order_id: parseInt(orderId, 10),
+            domain_name: domain
+          })
         });
         const json = await res.json();
         if (res.status === 401) {
-          alert('🔒 Authentication Failed: Invalid or missing X-POD-SECRET token. Access is restricted to WordPress Admin.');
+          alert('🔒 Authentication Failed: ' + (json.error || 'Invalid or missing X-POD-SECRET token. Access is restricted to WordPress Admin.'));
+          return;
+        }
+        if (res.status === 403 && json.error_code === 'LICENSE_EXPIRED') {
+          alert('⛔ Giấy Phép Hết Hạn: License cho domain "' + domain + '" đã hết hạn. Vui lòng gia hạn để tiếp tục render.');
           return;
         }
         if (!json.success) {
@@ -872,20 +952,27 @@
 
       try {
         const secret = getSecretToken();
+        const domain = getDomainName();
         const res = await fetch('/api/v1/test-render', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'X-POD-SECRET': secret
+            'X-POD-SECRET': secret,
+            'X-POD-DOMAIN': domain
           },
           body: JSON.stringify({
             order_id: 'test_' + Date.now(),
+            domain_name: domain,
             canvas_state: parsed
           })
         });
         const json = await res.json();
         if (res.status === 401) {
-          alert('🔒 Authentication Failed: Invalid or missing X-POD-SECRET token. Access is restricted to WordPress Admin.');
+          alert('🔒 Authentication Failed: ' + (json.error || 'Invalid or missing X-POD-SECRET token. Access is restricted to WordPress Admin.'));
+          return;
+        }
+        if (res.status === 403 && json.error_code === 'LICENSE_EXPIRED') {
+          alert('⛔ Giấy Phép Hết Hạn: License cho domain "' + domain + '" đã hết hạn. Vui lòng gia hạn để tiếp tục render.');
           return;
         }
         if (!json.success) {
@@ -969,6 +1056,7 @@
 
     // Initialize with sample JSON loaded
     loadSampleJson();
+    loadLicenseDiagnostics();
   </script>
 </body>
 </html>
