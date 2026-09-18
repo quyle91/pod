@@ -23,19 +23,40 @@ class TemplateLoader {
      * @return array<string, array>
      */
     public static function get_all_templates(): array {
-        $dir = self::get_templates_dir();
-        if (!is_dir($dir)) {
-            return [];
-        }
-
-        $files = glob($dir . '*.json');
         $templates = [];
 
-        foreach ($files as $file) {
-            $json = file_get_contents($file);
-            $data = json_decode($json, true);
-            if (is_array($data) && !empty($data['id'])) {
-                $templates[$data['id']] = self::normalize_template_assets($data);
+        // 1. Built-in plugin templates
+        $dir = self::get_templates_dir();
+        if (is_dir($dir)) {
+            $files = glob($dir . '*.json');
+            foreach ($files as $file) {
+                $json = file_get_contents($file);
+                $data = json_decode($json, true);
+                if (is_array($data)) {
+                    $id = $data['id'] ?? $data['template_id'] ?? null;
+                    if ($id) {
+                        $templates[$id] = self::normalize_template_assets($data);
+                    }
+                }
+            }
+        }
+
+        // 2. Two-Tier PSD Imported templates in wp-content/uploads/pod-templates/
+        $upload_dir = wp_upload_dir();
+        $imported_dir = trailingslashit($upload_dir['basedir']) . 'pod-templates/';
+        if (is_dir($imported_dir)) {
+            $config_files = glob($imported_dir . '*/template_config.json');
+            if ($config_files) {
+                foreach ($config_files as $cfg_file) {
+                    $json = file_get_contents($cfg_file);
+                    $data = json_decode($json, true);
+                    if (is_array($data)) {
+                        $id = $data['template_id'] ?? $data['id'] ?? null;
+                        if ($id) {
+                            $templates[$id] = self::normalize_template_assets($data);
+                        }
+                    }
+                }
             }
         }
 
@@ -82,6 +103,15 @@ class TemplateLoader {
         return $first_tpl ?: null;
     }
 
+    private static function normalize_url(?string $url): string {
+        if (empty($url)) return '';
+        if (preg_match('#^https?://#i', $url)) return $url;
+        if (strpos($url, '/wp-content/') === 0) {
+            return home_url($url);
+        }
+        return rtrim(POD_CUSTOMIZER_URL, '/') . '/' . ltrim($url, '/');
+    }
+
     /**
      * Convert relative template asset URLs into fully qualified absolute URLs.
      *
@@ -89,27 +119,45 @@ class TemplateLoader {
      * @return array
      */
     private static function normalize_template_assets(array $template): array {
-        $base_url = rtrim(POD_CUSTOMIZER_URL, '/') . '/';
-
         // Mockup URL
-        if (!empty($template['mockup']['url']) && !preg_match('#^https?://#i', $template['mockup']['url'])) {
-            $template['mockup']['url'] = $base_url . ltrim($template['mockup']['url'], '/');
+        if (!empty($template['mockup'])) {
+            if (!empty($template['mockup']['url'])) {
+                $template['mockup']['url'] = self::normalize_url($template['mockup']['url']);
+            }
+            if (!empty($template['mockup']['base_url'])) {
+                $template['mockup']['base_url'] = self::normalize_url($template['mockup']['base_url']);
+            }
         }
 
         // Field Assets
         if (!empty($template['fields']) && is_array($template['fields'])) {
             foreach ($template['fields'] as &$field) {
                 // Repeater sub-image
-                if (!empty($field['sub_image']['url']) && !preg_match('#^https?://#i', $field['sub_image']['url'])) {
-                    $field['sub_image']['url'] = $base_url . ltrim($field['sub_image']['url'], '/');
+                if (!empty($field['sub_image']['url'])) {
+                    $field['sub_image']['url'] = self::normalize_url($field['sub_image']['url']);
                 }
                 // Preset options
                 if (!empty($field['options']) && is_array($field['options'])) {
                     foreach ($field['options'] as &$opt) {
-                        if (!empty($opt['url']) && !preg_match('#^https?://#i', $opt['url'])) {
-                            $opt['url'] = $base_url . ltrim($opt['url'], '/');
+                        if (!empty($opt['url'])) {
+                            $opt['url'] = self::normalize_url($opt['url']);
+                        }
+                        if (!empty($opt['thumbnail_url'])) {
+                            $opt['thumbnail_url'] = self::normalize_url($opt['thumbnail_url']);
                         }
                     }
+                }
+            }
+        }
+
+        // Layer URLs
+        if (!empty($template['layers']) && is_array($template['layers'])) {
+            foreach ($template['layers'] as &$layer) {
+                if (!empty($layer['url'])) {
+                    $layer['url'] = self::normalize_url($layer['url']);
+                }
+                if (!empty($layer['placeholder_url'])) {
+                    $layer['placeholder_url'] = self::normalize_url($layer['placeholder_url']);
                 }
             }
         }

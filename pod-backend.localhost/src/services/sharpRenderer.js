@@ -30,6 +30,49 @@ class SharpRenderer {
     }
 
     /**
+     * Resolve image buffer from Buffer, data URL, Two-Tier local disk path, or HTTP URL.
+     * @param {string|Buffer} urlOrBuffer 
+     * @returns {Promise<Buffer|null>}
+     */
+    async resolveImageBuffer(urlOrBuffer) {
+        if (!urlOrBuffer) return null;
+        if (Buffer.isBuffer(urlOrBuffer)) return urlOrBuffer;
+        if (typeof urlOrBuffer === 'string') {
+            if (urlOrBuffer.startsWith('data:image/')) {
+                const parts = urlOrBuffer.split(',');
+                return Buffer.from(parts[1], 'base64');
+            }
+            // Fast Two-Tier Local Storage Resolution
+            if (urlOrBuffer.includes('/wp-content/uploads/')) {
+                const relPath = urlOrBuffer.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/?wp-content\/uploads\//, '');
+                const localPath = path.join('/app/wp-uploads', relPath);
+                if (fs.existsSync(localPath)) {
+                    return fs.readFileSync(localPath);
+                }
+                const hostPath = path.resolve(__dirname, '../../../pod.localhost/source/wp-content/uploads', relPath);
+                if (fs.existsSync(hostPath)) {
+                    return fs.readFileSync(hostPath);
+                }
+            }
+            // HTTP fetch fallback
+            let reqUrl = urlOrBuffer;
+            const headers = {};
+            if (reqUrl.startsWith('/')) {
+                reqUrl = 'http://172.18.0.1' + reqUrl;
+                headers['Host'] = 'pod.localhost';
+            }
+            try {
+                const res = await axios.get(reqUrl, { responseType: 'arraybuffer', timeout: 10000, headers });
+                return Buffer.from(res.data);
+            } catch (err) {
+                console.error(`[SharpRenderer] Failed to fetch image from ${urlOrBuffer}:`, err.message);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Generate comprehensive Factory Production Specifications manifest.
      */
     generateProductionSpecs({
@@ -254,21 +297,13 @@ class SharpRenderer {
 
                 // Always fetch and include the product mockup base & background in 03_raw_assets/
                 if (layer.buffer || layer.url) {
-                    let mBuffer = null;
+                    let mBuffer = await this.resolveImageBuffer(layer.buffer || layer.url);
                     let mFilename = `00_product_mockup_${layer.id || 'base'}`;
-
-                    if (layer.buffer) {
-                        mBuffer = Buffer.from(layer.buffer, 'base64');
+                    if (layer.url) {
+                        const urlBase = path.basename(layer.url.split('?')[0]);
+                        mFilename += `_${urlBase}`;
+                    } else {
                         mFilename += '.png';
-                    } else if (layer.url) {
-                        try {
-                            const res = await axios.get(layer.url, { responseType: 'arraybuffer', timeout: 10000 });
-                            mBuffer = Buffer.from(res.data);
-                            const urlBase = path.basename(layer.url.split('?')[0]);
-                            mFilename += `_${urlBase}`;
-                        } catch (err) {
-                            console.error(`[SharpRenderer] Failed to fetch mockup base from ${layer.url}:`, err.message);
-                        }
                     }
 
                     if (mBuffer) {
@@ -349,31 +384,15 @@ class SharpRenderer {
                 }
             }
 
-            // 2. Clipart, Image, or User Uploaded Photo
-            else if (layer.type === 'image' || layer.type === 'clipart' || layer.type === 'photo') {
-                let imgBuffer = null;
+            // 2. Clipart, Image, User Photo, or Two-Tier PSD Graphic Layers
+            else if (['image', 'clipart', 'photo', 'fixed_image', 'preset_picker', 'repeater'].includes(layer.type) || layer.url || layer.buffer) {
+                let imgBuffer = await this.resolveImageBuffer(layer.buffer || layer.url);
                 let assetFilename = `asset_${layer.id || Date.now()}`;
-
-                if (layer.buffer) {
-                    imgBuffer = Buffer.from(layer.buffer, 'base64');
+                if (layer.url) {
+                    const urlBase = path.basename(layer.url.split('?')[0]);
+                    assetFilename += `_${urlBase}`;
+                } else {
                     assetFilename += '.png';
-                } else if (layer.url) {
-                    if (layer.url.startsWith('data:image/')) {
-                        const parts = layer.url.split(',');
-                        const extMatch = layer.url.match(/^data:image\/(\w+);/);
-                        const ext = extMatch ? extMatch[1] : 'png';
-                        imgBuffer = Buffer.from(parts[1], 'base64');
-                        assetFilename += `.${ext}`;
-                    } else {
-                        try {
-                            const res = await axios.get(layer.url, { responseType: 'arraybuffer', timeout: 10000 });
-                            imgBuffer = Buffer.from(res.data);
-                            const urlBase = path.basename(layer.url.split('?')[0]);
-                            assetFilename += `_${urlBase}`;
-                        } catch (fetchErr) {
-                            console.error(`[SharpRenderer] Failed to fetch layer image from ${layer.url}:`, fetchErr.message);
-                        }
-                    }
                 }
 
                 if (imgBuffer) {
@@ -509,8 +528,7 @@ class SharpRenderer {
     createZipArchive({ outputPath, printImagePath, previewBuffer, specsText, rawAssets = [] }) {
         return new Promise((resolve, reject) => {
             const output = fs.createWriteStream(outputPath);
-            const { ZipArchive } = require('archiver');
-            const archive = new ZipArchive({ zlib: { level: 9 } });
+            const archive = archiver('zip', { zlib: { level: 9 } });
 
             output.on('close', () => resolve());
             archive.on('error', (err) => reject(err));

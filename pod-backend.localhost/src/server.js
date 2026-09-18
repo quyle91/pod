@@ -139,7 +139,9 @@ app.get('/health', async (req, res) => {
 });
 
 // API Routes
+const templatesRouter = require('./routes/templates');
 app.use('/api/v1', renderRouter);
+app.use('/api/templates', templatesRouter);
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {

@@ -19,6 +19,10 @@ dist/
 # Backend storage artifacts
 pod-backend.localhost/storage/prints/*
 !pod-backend.localhost/storage/prints/.gitkeep
+pod-backend.localhost/storage/uploads/*
+!pod-backend.localhost/storage/uploads/.gitkeep
+pod-backend.localhost/storage/chunks/*
+!pod-backend.localhost/storage/chunks/.gitkeep
 
 # WordPress dynamic and media files
 pod.localhost/source/wp-content/uploads/

@@ -8,6 +8,7 @@ use PodCustomizer\WooCommerce\OrderHandler;
 use PodCustomizer\WooCommerce\OrderWebhookDispatcher;
 use PodCustomizer\Admin\SettingsPage;
 use PodCustomizer\Admin\IconPostType;
+use PodCustomizer\Admin\TemplateImporterPage;
 use PodCustomizer\API\CallbackController;
 use PodCustomizer\API\AssetLibraryController;
 use PodCustomizer\Frontend\CustomizerAssets;
@@ -59,6 +60,7 @@ final class Plugin {
             new OrderWebhookDispatcher(),
             new SettingsPage(),
             new IconPostType(),
+            new TemplateImporterPage(),
             new CallbackController(),
             new AssetLibraryController(),
             new CustomizerAssets(),
