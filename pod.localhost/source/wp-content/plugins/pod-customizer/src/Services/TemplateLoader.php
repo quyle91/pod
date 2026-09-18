@@ -71,12 +71,25 @@ class TemplateLoader {
      * @return array|null
      */
     public static function get_active_template(?int $product_id = null): ?array {
+        // 1. Direct Product Configuration (Highest Priority for Product-Centric Flow)
+        if ($product_id) {
+            $direct_config = get_post_meta($product_id, '_pod_template_config', true);
+            if (!empty($direct_config)) {
+                if (is_string($direct_config)) {
+                    $direct_config = json_decode($direct_config, true);
+                }
+                if (is_array($direct_config) && (!empty($direct_config['layers']) || !empty($direct_config['fields']))) {
+                    return self::normalize_template_assets($direct_config);
+                }
+            }
+        }
+
         $templates = self::get_all_templates();
         if (empty($templates)) {
             return null;
         }
 
-        // 1. Query parameter override (e.g. ?pod_tpl=tpl_03)
+        // 2. Query parameter override (e.g. ?pod_tpl=tpl_03)
         if (isset($_GET['pod_tpl'])) {
             $requested_id = sanitize_key($_GET['pod_tpl']);
             if (isset($templates[$requested_id])) {

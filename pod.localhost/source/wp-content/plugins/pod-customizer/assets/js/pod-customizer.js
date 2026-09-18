@@ -198,6 +198,22 @@
             zIndex: zIdx++,
             printable: true
           });
+        } else if (obj.podType === "template_layer" || obj.podType === "template_fixed") {
+          if (obj.visible !== false) {
+            layers.push({
+              id: obj.podLayerId || `tpl_${zIdx}`,
+              type: "image",
+              name: obj.podLayerName || "Template Layer",
+              url: obj.podLayerUrl || "",
+              x: Math.round(obj.left * SCALE_RATIO),
+              y: Math.round(obj.top * SCALE_RATIO),
+              width: Math.round(obj.getScaledWidth() * SCALE_RATIO),
+              height: Math.round(obj.getScaledHeight() * SCALE_RATIO),
+              rotation: Math.round(obj.angle || 0),
+              zIndex: obj.podZIndex || zIdx++,
+              printable: true
+            });
+          }
         }
       });
     }
@@ -899,11 +915,15 @@
     return PREVIEW_SIZE / designWidth;
   }
   function renderAllTemplateFields() {
-    if (!config.template || !Array.isArray(config.template.fields)) return;
-    config.template.fields.forEach((field) => {
-      const val = state.templateValues ? state.templateValues[field.id] : void 0;
-      updateTemplateField(field.id, val);
-    });
+    if (!config.template) return;
+    const scale = getTemplateScale();
+    renderFixedTemplateLayers(scale);
+    if (Array.isArray(config.template.fields)) {
+      config.template.fields.forEach((field) => {
+        const val = state.templateValues ? state.templateValues[field.id] : void 0;
+        updateTemplateField(field.id, val);
+      });
+    }
   }
   function updateTemplateField(fieldId, value) {
     if (!state.canvas || !config.template) return;
@@ -916,19 +936,26 @@
       renderPresetImageSlot(field, value, scale);
     } else if (field.type === "repeater_counter") {
       renderRepeaterSlot(field, value, scale);
+    } else if (field.type === "layer_selector") {
+      renderLayerSelectorSlot(field, value, scale);
     }
   }
   function renderTextSlot(field, value, scale) {
-    const text = value !== void 0 ? String(value) : field.default_value || "";
-    const x = (field.position.x || 1200) * scale;
-    const y = (field.position.y || 1200) * scale;
-    const initialFontSize = (field.style.font_size_px || 60) * scale;
-    const minFontSize = (field.style.min_font_size_px || 18) * scale;
-    const maxWidth = (field.style.max_width_px || 800) * scale;
-    const fontFamily = field.style.font_family || "Montserrat";
-    const color = field.style.color || "#1e293b";
-    const rotation = field.style.rotation || 0;
-    const align = field.style.align || "center";
+    const targetLayer = (config.template.layers || []).find((l) => l.id === field.target_layer || l.id === field.id);
+    const text = value !== void 0 ? String(value) : field.default_value || targetLayer?.default_value || "";
+    const rawX = field.position?.x !== void 0 ? field.position.x : targetLayer ? targetLayer.x + (targetLayer.width || 0) / 2 : 1200;
+    const rawY = field.position?.y !== void 0 ? field.position.y : targetLayer ? targetLayer.y + (targetLayer.height || 0) / 2 : 1200;
+    const x = rawX * scale;
+    const y = rawY * scale;
+    const style = field.style || {};
+    const initialFontSize = (style.font_size_px || targetLayer?.font_size_pt || 48) * scale;
+    const minFontSize = (style.min_font_size_px || targetLayer?.behavior?.min_font_size_pt || 18) * scale;
+    const maxWidth = (style.max_width_px || targetLayer?.width || 800) * scale;
+    const fontFamily = style.font_family || targetLayer?.font_family || "Montserrat";
+    const color = style.color || targetLayer?.color || "#1e293b";
+    const rotation = style.rotation !== void 0 ? style.rotation : targetLayer?.rotation || 0;
+    const align = style.align || targetLayer?.text_align || "center";
+    const fontWeight = style.font_weight || "normal";
     if (state.templateObjects[field.id]) {
       state.canvas.remove(state.templateObjects[field.id]);
       delete state.templateObjects[field.id];
@@ -946,7 +973,7 @@
       top: y,
       fontFamily,
       fontSize: initialFontSize,
-      fontWeight: field.style.font_weight || "normal",
+      fontWeight,
       fill: color,
       textAlign: align,
       originX: align === "center" ? "center" : align === "right" ? "right" : "left",
@@ -956,6 +983,7 @@
       evented: false,
       podType: "text",
       podFieldId: field.id,
+      podZIndex: targetLayer?.z_index || 20,
       textBaseline: "alphabetic"
     });
     const measuredWidth = textObj.width;
@@ -983,13 +1011,19 @@
   }
   var templateImageCache = {};
   function renderPresetImageSlot(field, value, scale) {
+    const targetLayer = (config.template.layers || []).find((l) => l.id === field.target_layer || l.id === field.id);
     const optionId = value || field.default_value || field.options?.[0]?.id;
     const option = (field.options || []).find((o) => o.id === optionId) || field.options?.[0];
-    if (!option || !option.url) return;
-    const x = (field.position.x || 1200) * scale;
-    const y = (field.position.y || 1200) * scale;
-    const targetW = (field.position.width_px || 100) * scale;
-    const targetH = (field.position.height_px || 100) * scale;
+    const imgUrl = option?.url || option?.thumbnail_url || targetLayer?.placeholder_url;
+    if (!imgUrl) return;
+    const rawX = field.position?.x !== void 0 ? field.position.x : targetLayer ? targetLayer.x + (targetLayer.width || 0) / 2 : 1200;
+    const rawY = field.position?.y !== void 0 ? field.position.y : targetLayer ? targetLayer.y + (targetLayer.height || 0) / 2 : 1200;
+    const rawW = field.position?.width_px !== void 0 ? field.position.width_px : targetLayer?.width || 200;
+    const rawH = field.position?.height_px !== void 0 ? field.position.height_px : targetLayer?.height || 200;
+    const x = rawX * scale;
+    const y = rawY * scale;
+    const targetW = rawW * scale;
+    const targetH = rawH * scale;
     function applyPresetImage(imgElement) {
       if (state.templateObjects[field.id]) {
         state.canvas.remove(state.templateObjects[field.id]);
@@ -1003,9 +1037,10 @@
         selectable: false,
         evented: false,
         podType: "clipart",
-        clipartName: option.label || option.id,
-        clipartUrl: option.url,
-        podFieldId: field.id
+        clipartName: option?.label || option?.id || "Icon",
+        clipartUrl: imgUrl,
+        podFieldId: field.id,
+        podZIndex: targetLayer?.z_index || 15
       });
       svgObj.scaleToWidth(targetW);
       if (svgObj.getScaledHeight() > targetH) {
@@ -1017,20 +1052,104 @@
       state.canvas.renderAll();
       syncStateToForm();
     }
-    if (templateImageCache[option.url]) {
-      applyPresetImage(templateImageCache[option.url]);
+    if (templateImageCache[imgUrl]) {
+      applyPresetImage(templateImageCache[imgUrl]);
     } else {
       fabric.Image.fromURL(
-        option.url,
+        imgUrl,
         (img) => {
           if (!img) return;
           const elem = img.getElement();
-          templateImageCache[option.url] = elem;
+          templateImageCache[imgUrl] = elem;
           applyPresetImage(elem);
         },
         { crossOrigin: "anonymous" }
       );
     }
+  }
+  function renderLayerSelectorSlot(field, value, scale) {
+    const selectedId = value || field.default_value || field.options?.[0]?.layer_id || field.options?.[0]?.id;
+    const opt = (field.options || []).find((o) => o.id === selectedId || o.layer_id === selectedId);
+    const targetLayerId = opt ? opt.layer_id || opt.id : selectedId;
+    const groupLayers = (config.template.layers || []).filter((l) => l.group_id === field.id);
+    groupLayers.forEach((layer) => {
+      const isChosen = layer.id === targetLayerId || layer.id === selectedId;
+      let fabricObj = state.templateObjects[layer.id];
+      if (!fabricObj && layer.url) {
+        fabric.Image.fromURL(
+          layer.url,
+          (img) => {
+            if (!img) return;
+            img.set({
+              left: (layer.x || 0) * scale,
+              top: (layer.y || 0) * scale,
+              scaleX: (layer.width || img.width) * scale / img.width,
+              scaleY: (layer.height || img.height) * scale / img.height,
+              angle: layer.rotation || 0,
+              selectable: false,
+              evented: false,
+              visible: isChosen,
+              podType: "template_layer",
+              podLayerId: layer.id,
+              podLayerName: layer.name,
+              podLayerUrl: layer.url,
+              podZIndex: layer.z_index || 5
+            });
+            state.templateObjects[layer.id] = img;
+            state.canvas.add(img);
+            sortTemplateObjectsZIndex();
+            state.canvas.renderAll();
+          },
+          { crossOrigin: "anonymous" }
+        );
+      } else if (fabricObj) {
+        fabricObj.set("visible", isChosen);
+        state.canvas.renderAll();
+      }
+    });
+    syncStateToForm();
+  }
+  function renderFixedTemplateLayers(scale) {
+    if (!config.template || !Array.isArray(config.template.layers)) return;
+    config.template.layers.forEach((layer) => {
+      if (layer.type === "fixed_image" && layer.url) {
+        if (state.templateObjects[layer.id]) return;
+        fabric.Image.fromURL(
+          layer.url,
+          (img) => {
+            if (!img) return;
+            img.set({
+              left: (layer.x || 0) * scale,
+              top: (layer.y || 0) * scale,
+              scaleX: (layer.width || img.width) * scale / img.width,
+              scaleY: (layer.height || img.height) * scale / img.height,
+              angle: layer.rotation || 0,
+              selectable: false,
+              evented: false,
+              visible: true,
+              podType: "template_fixed",
+              podLayerId: layer.id,
+              podLayerName: layer.name,
+              podLayerUrl: layer.url,
+              podZIndex: layer.z_index || 1
+            });
+            state.templateObjects[layer.id] = img;
+            state.canvas.add(img);
+            sortTemplateObjectsZIndex();
+            state.canvas.renderAll();
+          },
+          { crossOrigin: "anonymous" }
+        );
+      }
+    });
+  }
+  function sortTemplateObjectsZIndex() {
+    if (!state.canvas) return;
+    const objects = state.canvas.getObjects().slice();
+    objects.sort((a, b) => (a.podZIndex || 10) - (b.podZIndex || 10));
+    objects.forEach((obj, idx) => {
+      state.canvas.moveTo(obj, idx);
+    });
   }
   function renderRepeaterSlot(field, value, scale) {
     const min = field.min !== void 0 ? field.min : 1;
@@ -1217,6 +1336,8 @@
         renderPresetPicker(fieldGroup, field, values[field.id], onFieldChange);
       } else if (field.type === "repeater_counter") {
         renderRepeaterCounter(fieldGroup, field, values[field.id], onFieldChange);
+      } else if (field.type === "layer_selector") {
+        renderLayerSelector(fieldGroup, field, values[field.id], onFieldChange);
       }
       container.appendChild(fieldGroup);
     });
@@ -1314,6 +1435,34 @@
     btnMinus.disabled = val <= min;
     btnPlus.disabled = val >= max;
     parent.appendChild(stepper);
+  }
+  function renderLayerSelector(parent, field, currentValue, onFieldChange) {
+    const grid = document.createElement("div");
+    grid.className = "pod-preset-grid pod-layer-selector-grid";
+    const activeId = currentValue || field.default_value || field.options?.[0]?.layer_id || field.options?.[0]?.id;
+    (field.options || []).forEach((opt) => {
+      const optValue = opt.layer_id || opt.id;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `pod-preset-btn ${optValue === activeId || opt.id === activeId ? "active" : ""}`;
+      btn.setAttribute("data-option-id", optValue);
+      btn.title = opt.label || opt.id;
+      const thumbUrl = opt.thumbnail_url || opt.url || "";
+      btn.innerHTML = `
+      <div class="pod-preset-thumb">
+        ${thumbUrl ? `<img src="${thumbUrl}" alt="${opt.label || opt.id}" />` : `<span style="font-size: 11px; font-weight: 600;">${opt.label || opt.id}</span>`}
+      </div>
+      <span class="pod-preset-label">${opt.label || opt.id}</span>
+    `;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        grid.querySelectorAll(".pod-preset-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        onFieldChange(field.id, optValue);
+      });
+      grid.appendChild(btn);
+    });
+    parent.appendChild(grid);
   }
 
   // assets/js/src/preview.js

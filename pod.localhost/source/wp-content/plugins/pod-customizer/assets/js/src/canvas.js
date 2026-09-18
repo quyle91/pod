@@ -94,13 +94,23 @@ export function getTemplateScale() {
 /**
  * Render all template fields based on current templateValues
  */
+/**
+ * Render all template fields based on current templateValues
+ */
 export function renderAllTemplateFields() {
-  if (!config.template || !Array.isArray(config.template.fields)) return;
+  if (!config.template) return;
+  const scale = getTemplateScale();
 
-  config.template.fields.forEach((field) => {
-    const val = state.templateValues ? state.templateValues[field.id] : undefined;
-    updateTemplateField(field.id, val);
-  });
+  // 1. Render Fixed PSD Layers (Background, Decorative Frames)
+  renderFixedTemplateLayers(scale);
+
+  // 2. Render Interactive Fields
+  if (Array.isArray(config.template.fields)) {
+    config.template.fields.forEach((field) => {
+      const val = state.templateValues ? state.templateValues[field.id] : undefined;
+      updateTemplateField(field.id, val);
+    });
+  }
 }
 
 /**
@@ -120,23 +130,33 @@ export function updateTemplateField(fieldId, value) {
     renderPresetImageSlot(field, value, scale);
   } else if (field.type === 'repeater_counter') {
     renderRepeaterSlot(field, value, scale);
+  } else if (field.type === 'layer_selector') {
+    renderLayerSelectorSlot(field, value, scale);
   }
 }
 
 /**
- * 1. Text Slot with Auto-Shrink Algorithm
+ * 1. Text Slot with Auto-Shrink Algorithm (supports Spec 008 position & Spec 009 target_layer)
  */
 function renderTextSlot(field, value, scale) {
-  const text = value !== undefined ? String(value) : (field.default_value || '');
-  const x = (field.position.x || 1200) * scale;
-  const y = (field.position.y || 1200) * scale;
-  const initialFontSize = (field.style.font_size_px || 60) * scale;
-  const minFontSize = (field.style.min_font_size_px || 18) * scale;
-  const maxWidth = (field.style.max_width_px || 800) * scale;
-  const fontFamily = field.style.font_family || 'Montserrat';
-  const color = field.style.color || '#1e293b';
-  const rotation = field.style.rotation || 0;
-  const align = field.style.align || 'center';
+  const targetLayer = (config.template.layers || []).find((l) => l.id === field.target_layer || l.id === field.id);
+  const text = value !== undefined ? String(value) : (field.default_value || targetLayer?.default_value || '');
+
+  // Safe position resolution
+  const rawX = field.position?.x !== undefined ? field.position.x : (targetLayer ? (targetLayer.x + (targetLayer.width || 0) / 2) : 1200);
+  const rawY = field.position?.y !== undefined ? field.position.y : (targetLayer ? (targetLayer.y + (targetLayer.height || 0) / 2) : 1200);
+  const x = rawX * scale;
+  const y = rawY * scale;
+
+  const style = field.style || {};
+  const initialFontSize = (style.font_size_px || targetLayer?.font_size_pt || 48) * scale;
+  const minFontSize = (style.min_font_size_px || targetLayer?.behavior?.min_font_size_pt || 18) * scale;
+  const maxWidth = (style.max_width_px || targetLayer?.width || 800) * scale;
+  const fontFamily = style.font_family || targetLayer?.font_family || 'Montserrat';
+  const color = style.color || targetLayer?.color || '#1e293b';
+  const rotation = style.rotation !== undefined ? style.rotation : (targetLayer?.rotation || 0);
+  const align = style.align || targetLayer?.text_align || 'center';
+  const fontWeight = style.font_weight || 'normal';
 
   // Remove previous text object
   if (state.templateObjects[field.id]) {
@@ -158,7 +178,7 @@ function renderTextSlot(field, value, scale) {
     top: y,
     fontFamily: fontFamily,
     fontSize: initialFontSize,
-    fontWeight: field.style.font_weight || 'normal',
+    fontWeight: fontWeight,
     fill: color,
     textAlign: align,
     originX: align === 'center' ? 'center' : (align === 'right' ? 'right' : 'left'),
@@ -168,6 +188,7 @@ function renderTextSlot(field, value, scale) {
     evented: false,
     podType: 'text',
     podFieldId: field.id,
+    podZIndex: targetLayer?.z_index || 20,
     textBaseline: 'alphabetic',
   });
 
@@ -205,17 +226,25 @@ function renderTextSlot(field, value, scale) {
 const templateImageCache = {};
 
 /**
- * 2. Preset Icon Picker Slot
+ * 2. Preset Icon Picker Slot (supports Spec 008 options & Spec 009 target_layer placeholder)
  */
 function renderPresetImageSlot(field, value, scale) {
+  const targetLayer = (config.template.layers || []).find((l) => l.id === field.target_layer || l.id === field.id);
   const optionId = value || field.default_value || field.options?.[0]?.id;
   const option = (field.options || []).find((o) => o.id === optionId) || field.options?.[0];
-  if (!option || !option.url) return;
 
-  const x = (field.position.x || 1200) * scale;
-  const y = (field.position.y || 1200) * scale;
-  const targetW = (field.position.width_px || 100) * scale;
-  const targetH = (field.position.height_px || 100) * scale;
+  const imgUrl = option?.url || option?.thumbnail_url || targetLayer?.placeholder_url;
+  if (!imgUrl) return;
+
+  const rawX = field.position?.x !== undefined ? field.position.x : (targetLayer ? (targetLayer.x + (targetLayer.width || 0) / 2) : 1200);
+  const rawY = field.position?.y !== undefined ? field.position.y : (targetLayer ? (targetLayer.y + (targetLayer.height || 0) / 2) : 1200);
+  const rawW = field.position?.width_px !== undefined ? field.position.width_px : (targetLayer?.width || 200);
+  const rawH = field.position?.height_px !== undefined ? field.position.height_px : (targetLayer?.height || 200);
+
+  const x = rawX * scale;
+  const y = rawY * scale;
+  const targetW = rawW * scale;
+  const targetH = rawH * scale;
 
   function applyPresetImage(imgElement) {
     if (state.templateObjects[field.id]) {
@@ -231,9 +260,10 @@ function renderPresetImageSlot(field, value, scale) {
       selectable: false,
       evented: false,
       podType: 'clipart',
-      clipartName: option.label || option.id,
-      clipartUrl: option.url,
+      clipartName: option?.label || option?.id || 'Icon',
+      clipartUrl: imgUrl,
       podFieldId: field.id,
+      podZIndex: targetLayer?.z_index || 15,
     });
 
     svgObj.scaleToWidth(targetW);
@@ -248,20 +278,119 @@ function renderPresetImageSlot(field, value, scale) {
     syncStateToForm();
   }
 
-  if (templateImageCache[option.url]) {
-    applyPresetImage(templateImageCache[option.url]);
+  if (templateImageCache[imgUrl]) {
+    applyPresetImage(templateImageCache[imgUrl]);
   } else {
     fabric.Image.fromURL(
-      option.url,
+      imgUrl,
       (img) => {
         if (!img) return;
         const elem = img.getElement();
-        templateImageCache[option.url] = elem;
+        templateImageCache[imgUrl] = elem;
         applyPresetImage(elem);
       },
       { crossOrigin: 'anonymous' }
     );
   }
+}
+
+/**
+ * 3. Layer Selector Slot (100% Layer-driven for skin tone, hair style, etc.)
+ */
+function renderLayerSelectorSlot(field, value, scale) {
+  const selectedId = value || field.default_value || field.options?.[0]?.layer_id || field.options?.[0]?.id;
+  const opt = (field.options || []).find((o) => o.id === selectedId || o.layer_id === selectedId);
+  const targetLayerId = opt ? (opt.layer_id || opt.id) : selectedId;
+
+  const groupLayers = (config.template.layers || []).filter((l) => l.group_id === field.id);
+
+  groupLayers.forEach((layer) => {
+    const isChosen = (layer.id === targetLayerId || layer.id === selectedId);
+    let fabricObj = state.templateObjects[layer.id];
+
+    if (!fabricObj && layer.url) {
+      fabric.Image.fromURL(
+        layer.url,
+        (img) => {
+          if (!img) return;
+          img.set({
+            left: (layer.x || 0) * scale,
+            top: (layer.y || 0) * scale,
+            scaleX: ((layer.width || img.width) * scale) / img.width,
+            scaleY: ((layer.height || img.height) * scale) / img.height,
+            angle: layer.rotation || 0,
+            selectable: false,
+            evented: false,
+            visible: isChosen,
+            podType: 'template_layer',
+            podLayerId: layer.id,
+            podLayerName: layer.name,
+            podLayerUrl: layer.url,
+            podZIndex: layer.z_index || 5,
+          });
+          state.templateObjects[layer.id] = img;
+          state.canvas.add(img);
+          sortTemplateObjectsZIndex();
+          state.canvas.renderAll();
+        },
+        { crossOrigin: 'anonymous' }
+      );
+    } else if (fabricObj) {
+      fabricObj.set('visible', isChosen);
+      state.canvas.renderAll();
+    }
+  });
+
+  syncStateToForm();
+}
+
+/**
+ * Render fixed graphic layers (e.g. [fixed] Background Frame)
+ */
+function renderFixedTemplateLayers(scale) {
+  if (!config.template || !Array.isArray(config.template.layers)) return;
+
+  config.template.layers.forEach((layer) => {
+    if (layer.type === 'fixed_image' && layer.url) {
+      if (state.templateObjects[layer.id]) return;
+
+      fabric.Image.fromURL(
+        layer.url,
+        (img) => {
+          if (!img) return;
+          img.set({
+            left: (layer.x || 0) * scale,
+            top: (layer.y || 0) * scale,
+            scaleX: ((layer.width || img.width) * scale) / img.width,
+            scaleY: ((layer.height || img.height) * scale) / img.height,
+            angle: layer.rotation || 0,
+            selectable: false,
+            evented: false,
+            visible: true,
+            podType: 'template_fixed',
+            podLayerId: layer.id,
+            podLayerName: layer.name,
+            podLayerUrl: layer.url,
+            podZIndex: layer.z_index || 1,
+          });
+          state.templateObjects[layer.id] = img;
+          state.canvas.add(img);
+          sortTemplateObjectsZIndex();
+          state.canvas.renderAll();
+        },
+        { crossOrigin: 'anonymous' }
+      );
+    }
+  });
+}
+
+function sortTemplateObjectsZIndex() {
+  if (!state.canvas) return;
+  const objects = state.canvas.getObjects().slice();
+  objects.sort((a, b) => (a.podZIndex || 10) - (b.podZIndex || 10));
+  objects.forEach((obj, idx) => {
+    state.canvas.moveTo(obj, idx);
+  });
 }
 
 /**

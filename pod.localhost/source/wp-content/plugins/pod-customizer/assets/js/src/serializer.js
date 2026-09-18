@@ -81,6 +81,22 @@ export function serializeCanvasState() {
           zIndex: zIdx++,
           printable: true,
         });
+      } else if (obj.podType === 'template_layer' || obj.podType === 'template_fixed') {
+        if (obj.visible !== false) {
+          layers.push({
+            id: obj.podLayerId || `tpl_${zIdx}`,
+            type: 'image',
+            name: obj.podLayerName || 'Template Layer',
+            url: obj.podLayerUrl || '',
+            x: Math.round(obj.left * SCALE_RATIO),
+            y: Math.round(obj.top * SCALE_RATIO),
+            width: Math.round(obj.getScaledWidth() * SCALE_RATIO),
+            height: Math.round(obj.getScaledHeight() * SCALE_RATIO),
+            rotation: Math.round(obj.angle || 0),
+            zIndex: obj.podZIndex || zIdx++,
+            printable: true,
+          });
+        }
       }
     });
   }

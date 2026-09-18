@@ -29,6 +29,8 @@ export function initTemplateForm(template, values, onFieldChange) {
       renderPresetPicker(fieldGroup, field, values[field.id], onFieldChange);
     } else if (field.type === 'repeater_counter') {
       renderRepeaterCounter(fieldGroup, field, values[field.id], onFieldChange);
+    } else if (field.type === 'layer_selector') {
+      renderLayerSelector(fieldGroup, field, values[field.id], onFieldChange);
     }
 
     container.appendChild(fieldGroup);
@@ -162,3 +164,43 @@ function renderRepeaterCounter(parent, field, currentValue, onFieldChange) {
 
   parent.appendChild(stepper);
 }
+
+/**
+ * Render Layer Selector Swatches (100% Layer-driven for skin tones, hairstyle, outfits)
+ */
+function renderLayerSelector(parent, field, currentValue, onFieldChange) {
+  const grid = document.createElement('div');
+  grid.className = 'pod-preset-grid pod-layer-selector-grid';
+
+  const activeId = currentValue || field.default_value || field.options?.[0]?.layer_id || field.options?.[0]?.id;
+
+  (field.options || []).forEach((opt) => {
+    const optValue = opt.layer_id || opt.id;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `pod-preset-btn ${optValue === activeId || opt.id === activeId ? 'active' : ''}`;
+    btn.setAttribute('data-option-id', optValue);
+    btn.title = opt.label || opt.id;
+
+    const thumbUrl = opt.thumbnail_url || opt.url || '';
+
+    btn.innerHTML = `
+      <div class="pod-preset-thumb">
+        ${thumbUrl ? `<img src="${thumbUrl}" alt="${opt.label || opt.id}" />` : `<span style="font-size: 11px; font-weight: 600;">${opt.label || opt.id}</span>`}
+      </div>
+      <span class="pod-preset-label">${opt.label || opt.id}</span>
+    `;
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      grid.querySelectorAll('.pod-preset-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      onFieldChange(field.id, optValue);
+    });
+
+    grid.appendChild(btn);
+  });
+
+  parent.appendChild(grid);
+}
+
